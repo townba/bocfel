@@ -1,0 +1,273 @@
+.TH "Bocfel" "6" "0.5.0" "Chris Spiegel" ""
+.SH "NAME"
+\fBbocfel\fR \-\- Z\-machine interpreter (http://bocfel.googlecode.com/)
+.SH "SYNTAX"
+\fBbocfel\fR [\fB\-cCedfgGklLrstUxXy\fR] [\fB\-a\fR \fIeval_stack_size\fR] [\fB\-A\fR \fIcall_stack_size\fR] [\fB\-E\fR \fIescape_string\fR] [\fB\-n\fR \fInumber\fR] [\fB\-N\fR \fIversion\fR] [\fB\-R\fR \fIreplay_filename\fR] [\fB\-S\fR \fIscript_filename\fR] [\fB\-T\fR \fItranscript_filename\fR] [\fB\-u\fR \fIslots\fR] [\fB\-z\fR \fIseed\fR] \fIfile\fR
+.br 
+\fBbocfel\fR \fB\-i\fR \fIfile\fR
+.SH "DESCRIPTION"
+\fBBocfel\fR is a Z\-machine interpreter. It fully supports versions 1\-5, 7, and 8 of the Z\-machine, with extremely limited support for version 6. It can read stories stored in Blorb files, but has no support for associated sounds and graphics, if any exist.
+
+The following options are available:
+.TP 
+\fB\-a\fR \fIeval_stack_size\fR
+The Z\-machine contains an evaluation stack which games use as a sort of scratch space when performing calculations. By default the size of this stack is set at 4096, which should be sufficient for any game. The entire stack is allocated at once, so if you are on a system with a small amount of memory, setting this to a smaller value will cause less memory to be allocated.
+
+If you ever encounter a "stack overflow" message with the default size, please let me know.
+.TP 
+\fB\-A\fR \fIcall_stack_size\fR
+The Z\-machine allows games to call functions in order to get work done; these functions can call other functions, and so on.  Information about these functions is placed onto the call stack, which by default has a size of 512. This means that no more than 512 functions can be active at any single time.  This value should be much more than sufficient for any game.  As with the evaluation stack, memory for the call stack is allocated at one time, so machines with small amounts of memory can reduce this value to reduce memory consumption.
+.TP 
+\fB\-c\fR
+If the GLK implementation being used is Gargoyle, or if GLK is not being used at all, support for colors is provided.  This option disables color support entirely.
+.TP 
+\fB\-C\fR
+Do not read the configuration file ~/.bocfelrc. Settings in the configuration file take precedence over those specified on the command line, so if you want to override the configuration file, use this option.
+.TP 
+\fB\-e\fR
+Turn on ANSI escapes in the transcript. If this option is enabled, all user input in the transcript can be decorated with ANSI escape sequences so it stands out.  See the \fB\-E\fR option.
+.TP 
+\fB\-E\fR \fIescape_string\fR
+If the \fB\-e\fR option is used, this sets the escape string that will be used when highlighting user input in the transcript.  ^[[ is written, then \fIescape_string\fR, then ^[[0m.  By default "1m" is used as the escape string, providing bold text.
+.TP 
+\fB\-d\fR
+Many GLK implementations allow timed input as used by games such as Border Zone. This option disables timed input and informs games that timed input is not available.
+.TP 
+\fB\-f\fR
+Many GLK implementations allow a fixed\-width font to be selected. This option disables fixed\-width fonts and informs games that fixed\-width fonts are not available. The game might still be displayed using a fixed\-width (e.g. if you are playing in a terminal), but the game has no way of knowing this.
+.TP 
+\fB\-g\fR
+Disable the character graphics font. See the Character Graphics Font section below.
+.TP 
+\fB\-G\fR
+Most characters in the graphics font map fairly well to Unicode equivalents, but a few box drawing characters do not.  Two methods for drawing the missing characters are provided, each with pros and cons.  A description of the differences is not sufficient, so it is recommended that you try Beyond Zork both with and without this option, paying attention to the map connections.  See also the Character Graphics Font section below.
+.TP 
+\fB\-i\fR
+Print out the ID of the specified game and exit. This ID is used to uniquely identify a game and is adapted from the Treaty of Babel standard.  Game IDs can be used in the configuration file to set options for specific games. See below for more information.
+.TP 
+\fB\-k\fR
+The Z\-machine has a concept of "terminating keys". When enabled, these keys, in addition to Enter, terminate input immedately.  Beyond Zork, for example, uses this so that F1 automatically executes "look around", F2 does "inventory", and so on.  However, Beyond Zork also claims the up arrow, which means that history browsing, in GLK implementations that support it, might not be able to be initiated with the up arrow.  This option disables the use of terminating keys.  Note that not all GLK implementations support terminating keys.
+.TP 
+\fB\-l\fR
+When writing out transcripts, a character set must be chosen. By default, UTF\-8 is used on Unix systems, and Latin\-1 everywhere else. If GLK is not being used, the same character set is used for screen output as well. This option disables UTF\-8 and forces Latin\-1.
+.TP 
+\fB\-L\fR
+Force UTF\-8. This is the opposite of the \fB\-l\fR option above.
+.TP 
+\fB\-n\fR \fInumber\fR
+Z\-machine interpreters are able to inform games what platform they are running on by setting an interpreter number in the range 1 to 11.  The following are the valid values (taken from Graham Nelson's Z\-Machine Standards Document 1.0):
+
+1. DECSystem\-20
+.br 
+2. Apple IIe
+.br 
+3. Macintosh
+.br 
+4. Amiga
+.br 
+5. Atari ST
+.br 
+6. IBM PC
+.br 
+7. Commodore 128
+.br 
+8. Commodore 64
+.br 
+9. Apple IIc
+.br 
+10. Apple IIgs
+.br 
+11. Tandy Color
+
+By and large this value is meaningless.  Some Infocom games do make small use of this information: Trinity, for example, has a "print emphasized" routine that is used to print emphasized (which generally means italicized) text; on any machine but the Amiga, however, this routine makes sure not to print punctuation in italics. Beyond Zork makes what is probably the most visible use of the interpreter number, using it to decide how to deal with character graphics. See section 16 of the Z\-Machine Standards Document 1.0 for more information.  By default, the interpreter version is set to 1 becuase this causes Beyond Zork to prompt the user about the machine he is using, allowing him to select whether or not character graphics are used.
+
+I do not recommend setting this to 11.  At least Beyond Zork assumes that the largest it will be is 10, and setting it to 11 can cause an out\-of\-bounds memory access. The instance I have seen of this is not fatal, but there may be other instances that are.
+.TP 
+\fB\-N\fR \fIversion\fR
+Even more meaningless than the interpreter number is the interpreter version. This, as far as has been determined, is never used except when the user asks a game to either report its version or to verify its disk image. In these cases, the version is simply printed out, nothing more.  This is a single character and there is no real reason to change it. The default is C.
+.TP 
+\fB\-r\fR
+Play back a command record (see \fB\-s\fR) as soon as the game begins. Some games provide a way to play back a record (typically through the REPLAY verb in Inform\-based games, and #comm in some Infocom games), but this option is useful to start playback before you have an opportunity to call REPLAY, or if the game provides no way to play back such a record.
+.TP 
+\fB\-R\fR \fIreplay_filename\fR
+When command\-record playback is enabled, you will be prompted for a filename. This prompt can be bypassed by providing a filename here.
+.TP 
+\fB\-s\fR
+Turn on command recording. This records every keystroke the player makes, and (hopefully) creates a record that is suitable for playback either by using \fB\-r\fR or through a game command.  Some games provide this functionality themselves (typically through the RECORDING verb in Inform\-based games, and #reco in some Infocom games), but this option is useful to start recording before you have an opportunity to call RECORDING, or if the game provides no way to start such a record.
+.TP 
+\fB\-S\fR \fIscript_filename\fR
+When command recording is enabled, you will be prompted for a filename. This prompt can be bypassed by providing a filename here.
+.TP 
+\fB\-t\fR
+Turn on transcripting. This records both the output of the game and user input. If the chosen transcript file exists, it will be appended to, not overwritten. This way you can easily continue a transcript every time you come back to a game. See also the \fB\-y\fR option.
+.TP 
+\fB\-T\fR \fItranscript_filename\fR
+When transcripting is enabled, you will be prompted for a filename. This prompt can be bypassed by providing a filename here.
+.TP 
+\fB\-u\fR \fIslots\fR
+Some games provide the ability to undo a turn. In fact, some games allow multiple turns to be undone. This option controls how many save slots are available. Unlike the stacks (see \fB\-a\fR and \fB\-A\fR), save slots are dynamic, meaning that unless a game provides support for undo, no memory will be used.  However, games that do support undo will typically take a snapshot each turn, causing memory to be allocated.  The size of each snapshot depends on the game and the current state of play. Memory usage is minimized as much as possible: at the beginning of Anchorhead, for example, each slot takes up roughly 900 bytes.  As the game progresses, though, the size of a save slot inevitably will increase: near the end of Anchorhead, my save slots were taking up roughly 4500 bytes.
+
+Note that Inform\-based games (at least by default) do not support multiple undo; two non\-V6 Infocom games, to my knowledge, do: Sherlock and Beyond Zork. Thus multiple undo might be somewhat less than useful in the general case. The interpreter could be modified to support multiple undo in all games, regardless of whether they support multiple undo, or undo at all. I am considering this for future releases.
+
+The default value is 10. A value of zero disables undo, and a negative value provides unlimited undo. This is probably a bad idea.
+.TP 
+\fB\-U\fR
+One of the ways that undo slots (see \fB\-u\fR) save memory is to use compression. On modern machines the compression time is minuscule and not noticeable. On slower systems, however, it is possible that the compression will be noticeable. This option disables compression, but be aware that without compression, the size really balloons: save slots in Anchorhead, with compression, take up about 900 bytes on game startup. Without compression they take up over 40000 bytes.
+.TP
+\fB\-v\fR
+Display version information and show which compile-time options are set.
+.TP 
+\fB\-x\fR
+Most games include abbreviations for commonly\-used commands: x for EXAMINE, g for AGAIN, and z for WAIT. Some early Infocom games, however, do not provide these. By default, x, g, and z are mapped to their respective commands regardless of whether the game provides them. In the unlikely event that a game requires one of these letters for its own use, apart from an abbreviation, these abbreviations can be turned off with \fB\-x\fR.
+.TP 
+\fB\-X\fR
+The Tandy corporation licensed some Infocom games, but apparently The Witness was too scary for them, so some words were changed so as not to offend their ridiculously delicate sensibilities. If you want to laugh at Tandy's insecurities, this flag will turn on their censorship. In addition to the mangling of The Witness, a few other games unnecessarily add mention of Tandy in the output to the VERSION command.
+.TP 
+\fB\-y\fR
+When transcripting is turned on and an existing file is selected, that file is appended to rather than overwritten. This option causes the file to be overwritten.
+.TP 
+\fB\-z\fR \fIseed\fR
+Provide a seed to the pseudo\-random number generator, causing it to yield predictable values. This option is probably only of use to game authors who are doing testing.
+.SH "CONFIGURATION FILE"
+\fBBocfel\fR allows to you control its behavior through a configuration file. This obviates the need to provide command\-line arguments each time you start a game, as well as allowing customization based on which game is being played.
+
+The configuration file is located in $HOME/.bocfelrc, and a general outline is as follows:
+.IP 
+enable_escape = 1
+.br 
+disable_color = 1
+
+[1\-990831\-d8b4]
+.br 
+disable_color = 0
+
+[57\-871221]
+.br 
+int_number = 1
+.TP 
+The first lines are general, and apply to all games.  The bracketed lines start a new group based on the ID contained in the brackets (see the \fB\-i\fR option).  Thus disable_color is set to zero only for \fB1\-990831\-d8b4\fR, and int_number is set to 1 only for \fB57\-871221\fR. Comments begin with a # and continue to the end of the line. Trailing whitespace is ignored.
+.TP 
+The following are all the possible options, which are hopefully self\-explanatory:
+
+eval_stack_size (n)
+.br 
+call_stack_size (n)
+.br 
+disable_color (b)
+.br 
+disable_timed (b)
+.br 
+enable_escape (b)
+.br 
+escape_string (s)
+.br 
+disable_fixed (b)
+.br 
+disable_graphics_font (b)
+.br 
+enable_alt_graphics (b)
+.br 
+disable_term_keys (b)
+.br 
+disable_utf8 (b)
+.br 
+force_utf8 (b)
+.br 
+max_saves (n)
+.br 
+disable_undo_compression (b)
+.br 
+int_number (n)
+.br 
+int_version (c)
+.br 
+prng (s)
+.br 
+replay_on (b)
+.br 
+replay_name (s)
+.br 
+script_on (b)
+.br 
+script_name (s)
+.br 
+transcript_on (b)
+.br 
+transcript_name (s)
+.br 
+disable_abbreviations (b)
+.br 
+enable_censorship (b)
+.br 
+overwrite_transcript (b)
+.br 
+random_seed (n)
+.TP 
+The parenthesized character describes the type of argument: b is a boolean (1 is true, 0 is false), c is a character, n is a number, and s is a string.  These all correspond to possible command\-line arguments.
+.TP 
+In addition to analogs to the command\-line arguments, there are a couple of options that can be set only through the configuration file.  One is "cheat": see the Cheating section below.  The other is fine\-grained control over colors in Gargoyle; this does not apply to any other build types.
+.TP 
+At the most basic, there are 8 colors that the Z\-Machine can use, corresponding to ANSI colors: black, red, green, yellow, blue, magenta, cyan, and white.  The syntax for setting these is:
+.IP 
+color_red = 0xc23621
+.TP 
+The color is specified as a 24\-bit RGB value, 8 bits per color.  The above is thus 0xc2 red, 0x36 green, and 0x21 blue.  The value must be specified in hexadecimal, with an optional leading 0x.
+.SH "CHARACTER GRAPHICS FONT"
+Beyond Zork can make use of a character graphics font. This font is used for drawing the interactive map, arrows, and runes. Most of the runes and arrows have Unicode equivalents and can be displayed if you have a font that contains these characters. Unicode also includes box\-drawing characters which can be used to approximate the map in Beyond Zork. These are not perfect, but they are not terrible.
+
+The \fB\-g\fR option disables the character graphics font, but unfortunately the ability to tell a game that a particular font is unavailable postdates Infocom, so this flag will not prevent Beyond Zork from trying to use it. Instead, Beyond Zork makes use of the interpreter number (see \fB\-n\fR) to decide whether to use character graphics. If you are using a font that does not provide the necessary Unicode characters, you will want to run Beyond Zork without the character graphics font. This is easily accomplished by answering "No" when the game asks you if you are using a VT\-220 (this only happens when the interpreter number is set to 1, which is the default).
+
+If the character font is disabled with \fB\-g\fR and a game tries to use it anyway (as is the case with Beyond Zork), the output will appear garbled, but only for that font. Anything the game prints out in a normal font will look fine.
+
+See section 16 of the Z\-Machine Standards Document 1.0 for more information.
+.SH "CHEATING"
+There is extremely rudimentary support for "cheating". \fBBocfel\fR is able to freeze certain areas of memory so that they always report the same value. The idea behind this is to prevent hunger and thirst counters from forcing you to eat and drink.
+
+Cheating is only available through the configuration file, and is treated like any configuration variable. Following is an example which contains the only five cheats I've taken the time to figure out so far:
+
+.IP 
+# Enchanter
+.br 
+[29\-860820]
+.br 
+# Always able to drink, but never dying of thirst.
+.br 
+cheat = freezew:0x24c5:50
+.br 
+# Always able to eat, but never dying of hunger.
+.br 
+cheat = freezew:0x24bf:50
+
+# Alternative (perhaps better) method for the above:
+
+# The "water object" never diminishes.
+.br
+cheat = freezew:0x1c09:4
+.br
+# The "bread object" never diminishes.
+.br
+cheat = freezew:0xf68:8
+
+# Cutthroats
+.br 
+[23\-840809]
+.br 
+# Never thirsty.
+.br 
+cheat = freezew:0x24be:100
+.TP 
+The syntax is as follows: freezew:\fBaddress\fR:\fBvalue\fR.
+.TP 
+This causes the word (a 16\-bit value) at address \fBaddress\fR to always contain the value \fBvalue\fR. The address must be specified in hexadecimal, with an optional leading 0x; the value is decimal. An explanation of how to figure out cheats is beyond the scope of this document.
+.TP 
+The above cheats for Enchanter and Cutthroats have not been extensively tested. They may render the games unwinnable. Use at your own risk.
+.TP
+Please note that it is possible for \fBBocfel\fR to be built without support for cheating, in which case these cheats will silently do nothing.  The \fB-v\fR option can be used to determine whether this is the case.
+.SH "AUTHORS"
+Chris Spiegel <cspiegel@gmail.com>
+.SH "SEE ALSO"
+frotz(6), nitfol(6), fizmo(6), iconv(1)
+.SH "STANDARDS"
+\fBBocfel\fR is believed to comply fully with version 1.0 of the Z\-machine Standards Document; see http://www.inform\-fiction.org/zmachine/standards/z1point0/index.html.
+
+Many aspect of version 1.1 of the standard are also implemented. However, \fBbocfel\fR still claims only to be compliant with version 1.0.
