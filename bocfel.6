@@ -1,8 +1,8 @@
-.TH "Bocfel" "6" "0.5.2" "Chris Spiegel" ""
+.TH "Bocfel" "6" "0.5.3" "Chris Spiegel" ""
 .SH "NAME"
 \fBbocfel\fR \-\- Z\-machine interpreter (http://bocfel.googlecode.com/)
 .SH "SYNTAX"
-\fBbocfel\fR [\fB\-cCedfgGklLrstUxXy\fR] [\fB\-a\fR \fIeval_stack_size\fR] [\fB\-A\fR \fIcall_stack_size\fR] [\fB\-E\fR \fIescape_string\fR] [\fB\-n\fR \fInumber\fR] [\fB\-N\fR \fIversion\fR] [\fB\-R\fR \fIreplay_filename\fR] [\fB\-S\fR \fIscript_filename\fR] [\fB\-T\fR \fItranscript_filename\fR] [\fB\-u\fR \fIslots\fR] [\fB\-z\fR \fIseed\fR] \fIfile\fR
+\fBbocfel\fR [\fB\-cCedfgGklLrstUxXy\fR] [\fB\-a\fR \fIeval_stack_size\fR] [\fB\-A\fR \fIcall_stack_size\fR] [\fB\-E\fR \fIescape_string\fR] [\fB\-n\fR \fInumber\fR] [\fB\-N\fR \fIversion\fR] [\fB\-R\fR \fIreplay_filename\fR] [\fB\-S\fR \fIscript_filename\fR] [\fB\-T\fR \fItranscript_filename\fR] [\fB\-u\fR \fIslots\fR] [\fB\-z\fR \fIseed\fR] [\fB\-Z\fR \fIdevice\fR] \fIfile\fR
 .br 
 \fBbocfel\fR \fB\-i\fR \fIfile\fR
 .br
@@ -130,6 +130,9 @@ When transcripting is turned on and an existing file is selected, that file is a
 .TP 
 \fB\-z\fR \fIseed\fR
 Provide a seed to the pseudo\-random number generator, causing it to yield predictable values. This option is probably only of use to game authors who are doing testing.
+.TP
+\fB\-Z\fR \fIdevice\fR
+Provide a device from which a seed for the pseudo\-random number generator is read.  This is meant to be used with special files such as \fI/dev/urandom\fR, although it can be used with any file from which at least 32 bits can be read.  The \fB\-z\fR option overrides this option.
 .SH "CONFIGURATION FILE"
 \fBBocfel\fR allows to you control its behavior through a configuration file. This obviates the need to provide command\-line arguments each time you start a game, as well as allowing customization based on which game is being played.
 
@@ -204,6 +207,8 @@ enable_censorship (b)
 overwrite_transcript (b)
 .br 
 random_seed (n)
+.br
+random_device (s)
 .TP 
 The parenthesized character describes the type of argument: b is a boolean (1 is true, 0 is false), c is a character, n is a number, and s is a string.  These all correspond to possible command\-line arguments.
 .TP 

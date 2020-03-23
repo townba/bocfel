@@ -32,10 +32,6 @@ ifdef NO_SAFETY_CHECKS
   MACROS+=	-DZTERP_NO_SAFETY_CHECKS
 endif
 
-ifdef NO_V2
-  MACROS+=	-DZTERP_NO_V2
-endif
-
 ifdef NO_CHEAT
   MACROS+=	-DZTERP_NO_CHEAT
 endif

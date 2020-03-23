@@ -55,14 +55,6 @@ GLK=		gargoyle
 #
 # NO_SAFETY_CHECKS=	1
 
-# By default, Z-machine versions 1 and 2 are supported.  There are, to my
-# knowledge, only four version 1 and 2 story files (early releases of Zork I and
-# II).  Because support for versions 1 and 2 requires extra processing for each
-# and every character printed to the screen, support for these story files can
-# be disabled if the following variable is defined (with any value).
-#
-# NO_V2=		1
-
 # Rudimentary cheating support is available.  This allows certain parts of
 # memory to be “frozen”, meaning no matter what the game does, they will always
 # contain specific values.  The intended use for this is to freeze hunger and

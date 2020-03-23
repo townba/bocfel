@@ -1,3 +1,8 @@
+0.5.3
+• The initial random seed can now be read from a device such as /dev/random.
+• Support for Z-machine versions 1 and 2 is now built unconditionally.
+• Small bugfixes and general cleanup.
+
 0.5.2
 • Fix a display problem when a newline is printed at the right edge of the upper
   window.
