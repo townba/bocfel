@@ -1,3 +1,7 @@
+0.5.5
+• Preliminary @sound_effect support.
+• Small bugfixes and general cleanup.
+
 0.5.4
 • Fix a rather obscure bug triggered when @restart is called inside an
   interrupt.

@@ -27,15 +27,15 @@ PREFIX=		/usr/local
 BINDIR=		$(PREFIX)/bin
 MANDIR=		$(PREFIX)/man/man6
 
-# If defined, this variable controls which GLK implementation will be used.  The
-# GLK library must exist in a directory of the same name (so if GLK is set to
-# glktermw, the GLK implementation will be found in glktermw/).
+# If defined, this variable controls which Glk implementation will be used.  The
+# Glk library must exist in a directory of the same name (so if Glk is set to
+# glktermw, the Glk implementation will be found in glktermw/).
 # If this value is empty or not defined, I/O will be done solely in terms of C’s
 # standard library.
 #
 GLK=		gargoyle
 
-# The GLK specification recommends calling glk_tick() every instruction, because
+# The Glk specification recommends calling glk_tick() every instruction, because
 # there may be some platforms that need to do some processing every now and
 # again.  However, glk_tick() in the following implementations does not actually
 # do anything:

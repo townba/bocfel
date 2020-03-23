@@ -54,10 +54,13 @@ clean:
 install: bocfel
 	mkdir -p $(DESTDIR)$(BINDIR) $(DESTDIR)$(MANDIR)
 	install bocfel $(DESTDIR)$(BINDIR)
-	install bocfel.6 $(DESTDIR)$(MANDIR)
+	install -m644 bocfel.6 $(DESTDIR)$(MANDIR)
 
 .PHONY: depend
 depend:
 	makedepend -f- -Y $(MACROS) $(SRCS) > deps 2> /dev/null
+
+tags: $(SRCS)
+	ctags -I ZASSERT --c-kinds=+l $^ *.h
 
 include deps

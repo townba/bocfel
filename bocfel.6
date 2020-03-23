@@ -1,11 +1,11 @@
-.TH "Bocfel" "6" "0.5.4" "Chris Spiegel" ""
+.TH "Bocfel" "6" "0.5.5" "Chris Spiegel" ""
 .SH "NAME"
 \fBbocfel\fR \-\- Z\-machine interpreter (http://bocfel.googlecode.com/)
 .SH "SYNTAX"
-\fBbocfel\fR [\fB\-cCedfgGklLrstUxXy\fR] [\fB\-a\fR \fIeval_stack_size\fR] [\fB\-A\fR \fIcall_stack_size\fR] [\fB\-E\fR \fIescape_string\fR] [\fB\-n\fR \fInumber\fR] [\fB\-N\fR \fIversion\fR] [\fB\-R\fR \fIreplay_filename\fR] [\fB\-S\fR \fIscript_filename\fR] [\fB\-T\fR \fItranscript_filename\fR] [\fB\-u\fR \fIslots\fR] [\fB\-z\fR \fIseed\fR] [\fB\-Z\fR \fIdevice\fR] \fIfile\fR
+\fBbocfel\fR [\fB\-cCdDefgGklLrstUxXy\fR] [\fB\-a\fR \fIeval_stack_size\fR] [\fB\-A\fR \fIcall_stack_size\fR] [\fB\-E\fR \fIescape_string\fR] [\fB\-n\fR \fInumber\fR] [\fB\-N\fR \fIversion\fR] [\fB\-R\fR \fIreplay_filename\fR] [\fB\-S\fR \fIscript_filename\fR] [\fB\-T\fR \fItranscript_filename\fR] [\fB\-u\fR \fIslots\fR] [\fB\-z\fR \fIseed\fR] [\fB\-Z\fR \fIdevice\fR] \fIfile\fR
 .br 
 \fBbocfel\fR \fB\-i\fR \fIfile\fR
-.br
+.br 
 \fBbocfel\fR \fB\-v\fR
 .SH "DESCRIPTION"
 \fBBocfel\fR is a Z\-machine interpreter. It fully supports versions 1\-5, 7, and 8 of the Z\-machine, with extremely limited support for version 6. It can read stories stored in Blorb files, but has no support for associated sounds and graphics, if any exist.
@@ -21,10 +21,16 @@ If you ever encounter a "stack overflow" message with the default size, please l
 The Z\-machine allows games to call functions in order to get work done; these functions can call other functions, and so on.  Information about these functions is placed onto the call stack, which by default has a size of 512. This means that no more than 512 functions can be active at any single time.  This value should be much more than sufficient for any game.  As with the evaluation stack, memory for the call stack is allocated at one time, so machines with small amounts of memory can reduce this value to reduce memory consumption.
 .TP 
 \fB\-c\fR
-If the GLK implementation being used is Gargoyle, or if GLK is not being used at all, support for colors is provided.  This option disables color support entirely.
+If the Glk implementation being used is Gargoyle, or if Glk is not being used at all, support for colors is provided.  This option disables color support entirely.
 .TP 
 \fB\-C\fR
 Do not read the configuration file ~/.bocfelrc. Settings in the configuration file take precedence over those specified on the command line, so if you want to override the configuration file, use this option.
+.TP 
+\fB\-d\fR
+Many Glk implementations allow timed input as used by games such as Border Zone. This option disables timed input and informs games that timed input is not available.
+.TP 
+\fB\-D\fR
+If Gargoyle is being used, sound effects are supported.  This option disables sound effects and informs games that sound effects are not available.
 .TP 
 \fB\-e\fR
 Turn on ANSI escapes in the transcript. If this option is enabled, all user input in the transcript can be decorated with ANSI escape sequences so it stands out.  See the \fB\-E\fR option.
@@ -32,11 +38,8 @@ Turn on ANSI escapes in the transcript. If this option is enabled, all user inpu
 \fB\-E\fR \fIescape_string\fR
 If the \fB\-e\fR option is used, this sets the escape string that will be used when highlighting user input in the transcript.  ^[[ is written, then \fIescape_string\fR, then ^[[0m.  By default "1m" is used as the escape string, providing bold text.
 .TP 
-\fB\-d\fR
-Many GLK implementations allow timed input as used by games such as Border Zone. This option disables timed input and informs games that timed input is not available.
-.TP 
 \fB\-f\fR
-Many GLK implementations allow a fixed\-width font to be selected. This option disables fixed\-width fonts and informs games that fixed\-width fonts are not available. The game might still be displayed using a fixed\-width (e.g. if you are playing in a terminal), but the game has no way of knowing this.
+Many Glk implementations allow a fixed\-width font to be selected. This option disables fixed\-width fonts and informs games that fixed\-width fonts are not available. The game might still be displayed using a fixed\-width (e.g. if you are playing in a terminal), but the game has no way of knowing this.
 .TP 
 \fB\-g\fR
 Disable the character graphics font. See the Character Graphics Font section below.
@@ -48,10 +51,10 @@ Most characters in the graphics font map fairly well to Unicode equivalents, but
 Print out the ID of the specified game and exit. This ID is used to uniquely identify a game and is adapted from the Treaty of Babel standard.  Game IDs can be used in the configuration file to set options for specific games. See below for more information.
 .TP 
 \fB\-k\fR
-The Z\-machine has a concept of "terminating keys". When enabled, these keys, in addition to Enter, terminate input immedately.  Beyond Zork, for example, uses this so that F1 automatically executes "look around", F2 does "inventory", and so on.  However, Beyond Zork also claims the up arrow, which means that history browsing, in GLK implementations that support it, might not be able to be initiated with the up arrow.  This option disables the use of terminating keys.  Note that not all GLK implementations support terminating keys.
+The Z\-machine has a concept of "terminating keys". When enabled, these keys, in addition to Enter, terminate input immedately.  Beyond Zork, for example, uses this so that F1 automatically executes "look around", F2 does "inventory", and so on.  However, Beyond Zork also claims the up arrow, which means that history browsing, in Glk implementations that support it, might not be able to be initiated with the up arrow.  This option disables the use of terminating keys.  Note that not all Glk implementations support terminating keys.
 .TP 
 \fB\-l\fR
-When writing out transcripts, a character set must be chosen. By default, UTF\-8 is used on Unix systems, and Latin\-1 everywhere else. If GLK is not being used, the same character set is used for screen output as well. This option disables UTF\-8 and forces Latin\-1.
+When writing out transcripts, a character set must be chosen. By default, UTF\-8 is used on Unix systems, and Latin\-1 everywhere else. If Glk is not being used, the same character set is used for screen output as well. This option disables UTF\-8 and forces Latin\-1.
 .TP 
 \fB\-L\fR
 Force UTF\-8. This is the opposite of the \fB\-l\fR option above.
@@ -130,7 +133,7 @@ When transcripting is turned on and an existing file is selected, that file is a
 .TP 
 \fB\-z\fR \fIseed\fR
 Provide a seed to the pseudo\-random number generator, causing it to yield predictable values. This option is probably only of use to game authors who are doing testing.
-.TP
+.TP 
 \fB\-Z\fR \fIdevice\fR
 Provide a device from which a seed for the pseudo\-random number generator is read.  This is meant to be used with special files such as \fI/dev/urandom\fR, although it can be used with any file from which at least 32 bits can be read.  The \fB\-z\fR option overrides this option.
 .SH "CONFIGURATION FILE"
@@ -207,7 +210,7 @@ enable_censorship (b)
 overwrite_transcript (b)
 .br 
 random_seed (n)
-.br
+.br 
 random_device (s)
 .TP 
 The parenthesized character describes the type of argument: b is a boolean (1 is true, 0 is false), c is a character, n is a number, and s is a string.  These all correspond to possible command\-line arguments.
@@ -227,6 +230,8 @@ The \fB\-g\fR option disables the character graphics font, but unfortunately the
 If the character font is disabled with \fB\-g\fR and a game tries to use it anyway (as is the case with Beyond Zork), the output will appear garbled, but only for that font. Anything the game prints out in a normal font will look fine.
 
 See section 16 of the Z\-Machine Standards Document 1.0 for more information.
+.SH "SOUND EFFECTS"
+Currently, sound effects are only available when Gargoyle is used as the Glk implementation.  The sound effects should be bundled in a Blorb file, which must be named as follows: if the story file is /foo/bar/sherlock.z5, then the blorb file must be /foo/bar/sherlock.blb.  Sound effect support is experimental and does not currently conform fully to the Z\-machine standard.  Bleeps are not supported, nor is section 9.4.4, nor is the hack regarding The Lurking Horror mentioned in the Remarks section.
 .SH "CHEATING"
 There is extremely rudimentary support for "cheating". \fBBocfel\fR is able to freeze certain areas of memory so that they always report the same value. The idea behind this is to prevent hunger and thirst counters from forcing you to eat and drink.
 
@@ -266,7 +271,7 @@ cheat = freezew:0x24be:100
 The syntax is as follows: freezew:\fBaddress\fR:\fBvalue\fR.
 .TP 
 This causes the word (a 16\-bit value) at address \fBaddress\fR to always contain the value \fBvalue\fR. The address must be specified in hexadecimal, with an optional leading 0x; the value is interpreted as an integer constant in C: leading 0x means hexadecimal, leading 0 means octal, otherwise decimal.  Alternatively, instead of an actual address for \fBaddress\fR, a global variable can be specified.  This has the syntax \fBGxx\fR, where \fBxx\fR is a hexadecimal value in the range [0, 239], corresponding to global variables 0 to 239.
-.TP
+.TP 
 An explanation of how to figure out cheats is beyond the scope of this document.
 .TP 
 The above cheats for Enchanter and Cutthroats have not been extensively tested. They may render the games unwinnable. Use at your own risk.

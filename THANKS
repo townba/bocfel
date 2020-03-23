@@ -7,7 +7,7 @@ Infocom, for creating the Z-machine and all those games that run on it.
 
 The InfoTaskForce, for first figuring out how the Z-machine works.
 
-Graham Nelson, for Inform, the Z-machine Standards Document, and generally being
+Graham Nelson, for Inform, the Z-Machine Standards Document, and generally being
 responsible for the resurgence of the Z-machine.
 
 Graham Nelson, because listing him once does not adequately convey just how
@@ -16,15 +16,15 @@ instrumental he has been for the Z-machine.
 Mark Howell, for Ztools.  I don't think it would have been possible for me to
 complete Bocfel without txd, the Z-code disassembler.
 
-Andrew Plotkin, for GLK, as well as his tireless efforts on behalf of the
+Andrew Plotkin, for Glk, as well as his tireless efforts on behalf of the
 medium.
 
 Stefan Jokisch, for Frotz.  When I was unclear about particular bits of the
 Z-machine standard, peeking at Frotz's source code was very helpful.
 
-Tor Andersson, for Gargoyle, whose GLK implementation is my main target (don't
-worry, though, as I fully maintain complete GLK compliance!).
+Tor Andersson, for Gargoyle, whose Glk implementation is my main target (don't
+worry, though, as I fully maintain complete Glk compliance!).
 
-Ben Cressey, for maintaining Gargoyle and keeping its GLK implementation
+Ben Cressey, for maintaining Gargoyle and keeping its Glk implementation
 current, for importing Bocfel into Gargoyle, and for pointing out some bugs and
 making suggestions for improving Bocfel.
