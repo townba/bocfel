@@ -1,3 +1,6 @@
+0.6.3.1
+• Fix a potential use of uninitialized variable.
+
 0.6.3
 • Improved handling of abbreviations (x, g, z, and o).
 • The “attribute 48” bug of Sherlock is now properly handled.

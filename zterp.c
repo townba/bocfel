@@ -45,7 +45,7 @@
 #define MAX_LINE	2048
 #define MAX_PATH	4096
 
-#define ZTERP_VERSION	"0.6.3"
+#define ZTERP_VERSION	"0.6.3.1"
 
 const char *game_file;
 struct options options = {
