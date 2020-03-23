@@ -1,3 +1,12 @@
+0.6.2
+• Enable /undo in V5 games which do not support undo (e.g. Hitchhiker’s Guide).
+• Add new meta commands /say (allowing text strings which begin with / to be
+sent to the game) and /disable (which disables meta commands for the rest of the
+game session).
+• Add new meta commands /ps and /pop which allow in-memory saves to be created,
+providing arbitrary save points.
+• Meta commands are no longer included in transcripts.
+
 0.6.1
 • Bocfel is now dual-licensed under both the GPLv2 and GPLv3.
 • Small bugfixes and general cleanup.

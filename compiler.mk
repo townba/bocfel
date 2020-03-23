@@ -1,18 +1,29 @@
 ifeq ($(CC), gcc)
 CFLAGS+=	-Wall -Wshadow -std=c99 -pedantic
+endif
 
-else ifeq ($(CC), clang)
+ifeq ($(CC), clang)
 CFLAGS+=	-Wall -std=c99 -pedantic
+endif
 
-else ifeq ($(CC), icc)
+ifeq ($(CC), icc)
 CFLAGS+=	-w2 -wd2259,2557,869,981 -std=c99
+endif
 
-else ifeq ($(CC), suncc)
+ifeq ($(CC), suncc)
 CFLAGS+=	-xc99=all -Xc -v
+endif
 
-else ifeq ($(CC), opencc)
+ifeq ($(CC), opencc)
 CFLAGS+=	-Wall -std=c99
+endif
 
+ifeq ($(CC), cparser)
+CFLAGS+=	-Wno-attribute -std=c99 --strict
+endif
+
+ifeq ($(CC), ccc-analyzer)
+CFLAGS+=	-std=c99
 endif
 
 ifneq ($(CCHOST),)

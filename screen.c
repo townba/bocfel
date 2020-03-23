@@ -20,6 +20,7 @@
 #include <string.h>
 #include <stddef.h>
 #include <stdarg.h>
+#include <limits.h>
 
 #ifdef ZTERP_GLK
 #include <glk.h>
@@ -749,6 +750,15 @@ static void put_string(const char *s)
   }
 }
 
+static void put_string_screen(const char *s)
+{
+  unsigned int saved_streams = streams;
+
+  streams = STREAM_SCREEN;
+  put_string(s);
+  streams = saved_streams;
+}
+
 /* Decode and print a zcode string at address “addr”.  This can be
  * called recursively thanks to abbreviations; the initial call should
  * have “in_abbr” set to 0.
@@ -1047,9 +1057,9 @@ static glui32 convert_color(unsigned long color)
     0xc5, 0xce, 0xd6, 0xde, 0xe6, 0xef, 0xf7, 0xff
   };
 
-  return table[(color & 0x001f) >>  0] << 16 |
-         table[(color & 0x03e0) >>  5] << 8  |
-         table[(color & 0x7c00) >> 10] << 0;
+  return table[(color >>  0) & 0x1f] << 16 |
+         table[(color >>  5) & 0x1f] <<  8 |
+         table[(color >> 10) & 0x1f] <<  0;
 }
 #endif
 
@@ -1899,7 +1909,7 @@ void zshow_status(void)
 #endif
 }
 
-/* This is strcmp() except that the first string is Unicode. */
+/* These are strcmp() and strncmp() except that the first string is Unicode. */
 static int unicmp(const uint32_t *s1, const char *s2)
 {
   while(*s1 != 0 && *s2 == *s1)
@@ -1910,67 +1920,102 @@ static int unicmp(const uint32_t *s1, const char *s2)
 
   return *s1 - *s2;
 }
+static int unincmp(const uint32_t *s1, const char *s2, size_t n)
+{
+  if(n == 0) return 0;
+  while(--n > 0 && *s1 != 0 && *s1 == *s2)
+  {
+    s1++;
+    s2++;
+  }
+
+  return *s1 - *s2;
+}
 
 uint32_t read_pc;
 
-/* Try to parse a meta command.  Returns true if input should be
- * restarted, false to indicate no more input is required.  In most
- * cases input will be required because the game has requested it, but
- * /undo and /restore jump to different locations, so the current @read
- * no longer exists.
+static void try_user_save(const char *desc)
+{
+  if(push_save(SAVE_USER, read_pc, desc)) put_string_screen("[save pushed]");
+  else                                    put_string_screen("[save failed]");
+}
+
+static int try_user_restore(long i)
+{
+  if(pop_save(SAVE_USER, i))
+  {
+    put_string_screen("[restored]\n\n>");
+    return 1;
+  }
+  else
+  {
+    put_string_screen("[restore failed]");
+    return 0;
+  }
+}
+
+
+/* Try to parse a meta command.  If input should be re-requested, return
+ * “string”.  If parsing is complete, return NULL.  If a portion of the
+ * passed-in string should be processed as user input, return a pointer
+ * to the beginning of that portion.
+ * In most cases more input will be required because the game has
+ * requested it, but /undo, /restore, and /pop jump to different
+ * locations, so the current @read no longer exists; and /say instructs
+ * zread() to continue on with the given input.
  */
-static int handle_meta_command(const uint32_t *string)
+static const uint32_t *handle_meta_command(const uint32_t *string)
 {
   if(unicmp(string, "undo") == 0)
   {
     uint16_t flags2 = WORD(0x10);
-    int success = pop_save();
+    int success = pop_save(SAVE_GAME, 0);
 
     if(success != 0)
     {
       /* §6.1.2. */
       STORE_WORD(0x10, flags2);
 
-      if(zversion >= 5) store(success);
-      else              put_string("[undone]\n\n>");
+      if(seen_save_undo) store(success);
+      else               put_string_screen("[undone]\n\n>");
 
-      return 0;
+      return NULL;
     }
     else
     {
-      put_string("[no save found, unable to undo]");
+      put_string_screen("[no save found, unable to undo]");
     }
   }
   else if(unicmp(string, "scripton") == 0)
   {
-    if(output_stream(OSTREAM_SCRIPT, 0)) put_string("[transcripting on]");
-    else                                 put_string("[transcripting failed]");
+    if(output_stream(OSTREAM_SCRIPT, 0)) put_string_screen("[transcripting on]");
+    else                                 put_string_screen("[transcripting failed]");
   }
   else if(unicmp(string, "scriptoff") == 0)
   {
     output_stream(-OSTREAM_SCRIPT, 0);
-    put_string("[transcripting off]");
+    put_string_screen("[transcripting off]");
   }
   else if(unicmp(string, "recon") == 0)
   {
-    if(output_stream(OSTREAM_RECORD, 0)) put_string("[command recording on]");
-    else                                 put_string("[command recording failed]");
+    if(output_stream(OSTREAM_RECORD, 0)) put_string_screen("[command recording on]");
+    else                                 put_string_screen("[command recording failed]");
   }
   else if(unicmp(string, "recoff") == 0)
   {
     output_stream(-OSTREAM_RECORD, 0);
-    put_string("[command recording off]");
+    put_string_screen("[command recording off]");
   }
   else if(unicmp(string, "replay") == 0)
   {
-    if(input_stream(ISTREAM_FILE)) put_string("[replaying commands]");
-    else                           put_string("[replaying commands failed]");
+    if(input_stream(ISTREAM_FILE)) put_string_screen("[replaying commands]");
+    else                           put_string_screen("[replaying commands failed]");
   }
   else if(unicmp(string, "save") == 0)
   {
     if(interrupt_level() != 0)
     {
-      put_string("[cannot call /save while in an interrupt]");
+      put_string_screen("[cannot call /save while in an interrupt]");
     }
     else
     {
@@ -1981,8 +2026,8 @@ static int handle_meta_command(const uint32_t *string)
        * pc back before saving.
        */
       pc = read_pc;
-      if(do_save(1)) put_string("[saved]");
-      else           put_string("[save failed]");
+      if(do_save(1)) put_string_screen("[saved]");
+      else           put_string_screen("[save failed]");
       pc = tmp;
     }
   }
@@ -1990,17 +2035,84 @@ static int handle_meta_command(const uint32_t *string)
   {
     if(do_restore(1))
     {
-      put_string("[restored]\n\n>");
-      return 0;
+      put_string_screen("[restored]\n\n>");
+      return NULL;
     }
     else
     {
-      put_string("[restore failed]");
+      put_string_screen("[restore failed]");
     }
+  }
+  else if(unicmp(string, "ps") == 0 || unicmp(string, "ps ") == 0)
+  {
+    try_user_save(NULL);
+  }
+  else if(unincmp(string, "ps ", 3) == 0)
+  {
+    size_t len = 0;
+
+    while(string[len + 3] != 0) len++;
+
+    char desc[len + 1];
+
+    for(size_t i = 0; i < len + 1; i++)
+    {
+      uint32_t c = string[i + 3];
+
+      if(c == 0 || (c >= 32 && c <= 126)) desc[i] = c;
+      else                                desc[i] = '?';
+    }
+
+    try_user_save(desc);
+  }
+  else if(unicmp(string, "pop") == 0 || unicmp(string, "pop ") == 0)
+  {
+    if(try_user_restore(0)) return NULL;
+  }
+  else if(unincmp(string, "pop ", 4) == 0)
+  {
+    long saveno = 0;
+    int i = 4;
+
+    for(uint32_t c = string[i]; c != 0; c = string[++i])
+    {
+      if(c < '0' || c > '9')
+      {
+        put_string_screen("[invalid index]");
+        return string;
+      }
+      if(saveno >= (LONG_MAX / 10))
+      {
+        put_string_screen("[index too large]");
+        return string;
+      }
+      saveno *= 10;
+      saveno += c - '0';
+    }
+
+    if(try_user_restore(saveno - 1)) return NULL;
+  }
+  else if(unicmp(string, "ls") == 0)
+  {
+    list_saves(SAVE_USER, put_string_screen);
+  }
+  else if(unicmp(string, "disable") == 0)
+  {
+    options.disable_meta_commands = 1;
+    put_string_screen("[meta commands disabled]");
+  }
+  else if(unincmp(string, "say ", 4) == 0)
+  {
+    return string + 4;
+  }
+  else if(unicmp(string, "say") == 0)
+  {
+    put_string_screen("[missing command]");
   }
   else if(unicmp(string, "help") == 0)
   {
-    put_string(
+    put_string_screen(
+        "The following commands are provided by the interpreter, not the game:\n\n"
         "/undo: undo a turn\n"
         "/scripton: start a transcript\n"
         "/scriptoff: stop a transcript\n"
@@ -2008,15 +2120,22 @@ static int handle_meta_command(const uint32_t *string)
         "/recoff: stop a command record\n"
         "/replay: replay a command record\n"
         "/save: save the game\n"
-        "/restore: restore a game saved by /save"
+        "/restore: restore a game saved by /save\n"
+        "/ps: add a new in-memory save state\n"
+        "/ps [description]: add a new in-memory save state called [description]\n"
+        "/pop: restore the last-saved in-memory state\n"
+        "/pop [n]: restore the specified in-memory state\n"
+        "/ls: list all in-memory save states\n"
+        "/disable: disable these commands for the rest of this session\n"
+        "/say [command]: pretend like [command] was typed"
         );
   }
   else
   {
-    put_string("[unknown command]");
+    put_string_screen("[unknown command]");
   }
 
-  return 1;
+  return string;
 }
 
 void zread(void)
@@ -2075,6 +2194,53 @@ void zread(void)
   update_delayed();
 #endif
 
+  if(!options.disable_meta_commands)
+  {
+    string[input.len] = 0;
+
+    if(string[0] == '/')
+    {
+      const uint32_t *ret;
+
+      ret = handle_meta_command(string + 1);
+      if(ret == NULL)
+      {
+        return;
+      }
+      else if(ret == string + 1)
+      {
+        /* The game still wants input, so try again. */
+        put_string_screen("\n\n>");
+        zread();
+        return;
+      }
+      else
+      {
+        ptrdiff_t offset = ret - string;
+
+        input.len -= offset;
+        memmove(string, ret, (sizeof string[0]) * (input.len + 1));
+      }
+    }
+
+    /* V1–4 do not have @save_undo, so simulate one each time @read is
+     * called.
+     *
+     * Although V5 introduced @save_undo, not all games make use of it
+     * (e.g. Hitchhiker’s Guide).  Until @save_undo is called, simulate
+     * it each @read, just like in V1–4.  If @save_undo is called, all
+     * of these interpreter-generated save states are forgotten and the
+     * game’s calls to @save_undo take over.
+     *
+     * Because V1–4 games will never call @save_undo, seen_save_undo
+     * will never be true.  Thus there is no need to test zversion.
+     *
+     * pc is currently set to the next instruction, but the undo needs
+     * to come back to *this* instruction; so use read_pc instead of pc.
+     */
+    if(!seen_save_undo) push_save(SAVE_GAME, read_pc, NULL);
+  }
+
   if(options.enable_escape && (streams & STREAM_TRANS))
   {
     zterp_io_putc(transio, 033);
@@ -2099,39 +2265,6 @@ void zread(void)
 
   if(streams & STREAM_TRANS)  zterp_io_putc(transio, UNICODE_LINEFEED);
   if(streams & STREAM_SCRIPT) zterp_io_putc(scriptio, UNICODE_LINEFEED);
-
-  if(!options.disable_meta_commands)
-  {
-    string[input.len] = 0;
-
-    if(string[0] == '/')
-    {
-      if(handle_meta_command(string + 1))
-      {
-        /* The game still wants input, so try again. */
-        put_string("\n\n>");
-        zread();
-      }
-
-      return;
-    }
-
-    /* V1–4 do not have @save_undo, so simulate one each time @read is
-     * called.
-     *
-     * pc is currently set to the next instruction, but the undo needs
-     * to come back to *this* instruction; so temporarily set pc back
-     * before pushing the save.
-     */
-    if(zversion <= 4)
-    {
-      uint32_t tmp_pc = pc;
-
-      pc = read_pc;
-      push_save();
-      pc = tmp_pc;
-    }
-  }
 
   if(zversion >= 5)
   {

@@ -105,7 +105,7 @@ void seed_random(long value)
         FILE *fp;
         uint32_t temp;
 
-        fp = fopen(options.random_device, "r");
+        fp = fopen(options.random_device, "rb");
         if(fp != NULL)
         {
           if(fread(&temp, sizeof temp, 1, fp) == 1) s = temp;

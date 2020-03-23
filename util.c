@@ -144,7 +144,7 @@ int process_arguments(int argc, char **argv)
 {
   int c;
 
-  while( (c = zgetopt(argc, argv, "a:A:cCdDeE:fFgGiklLmn:N:rR:sS:tT:u:UvxXyz:Z:")) != -1 )
+  while( (c = zgetopt(argc, argv, "a:A:cCdDeE:fFgGiklLmn:N:rR:sS:tT:u:UvxXyYz:Z:")) != -1 )
   {
     switch(c)
     {
@@ -240,6 +240,9 @@ int process_arguments(int argc, char **argv)
         break;
       case 'y':
         options.overwrite_transcript = 1;
+        break;
+      case 'Y':
+        options.override_undo = 1;
         break;
       case 'z':
         options.random_seed = strtol(zoptarg, NULL, 10);

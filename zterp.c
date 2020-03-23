@@ -50,7 +50,7 @@ static schanid_t sound_channel = NULL;
 #define MAX_LINE	2048
 #define MAX_PATH	4096
 
-#define ZTERP_VERSION	"0.6.1"
+#define ZTERP_VERSION	"0.6.2"
 
 const char *game_file;
 struct options options = {
@@ -79,12 +79,13 @@ struct options options = {
   .record_name = NULL,
   .transcript_on = 0,
   .transcript_name = NULL,
-  .max_saves = 10,
+  .max_saves = 100,
   .disable_undo_compression = 0,
   .show_version = 0,
   .disable_abbreviations = 0,
   .enable_censorship = 0,
   .overwrite_transcript = 0,
+  .override_undo = 0,
   .random_seed = -1,
   .random_device = NULL,
 };
@@ -480,6 +481,7 @@ static void read_config(void)
     BOOL  (disable_abbreviations);
     BOOL  (enable_censorship);
     BOOL  (overwrite_transcript);
+    BOOL  (override_undo);
     NUMBER(random_seed);
     STRING(random_device);
 

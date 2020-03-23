@@ -36,6 +36,7 @@ struct options
   int disable_abbreviations;
   int enable_censorship;
   int overwrite_transcript;
+  int override_undo;
   long random_seed;
   char *random_device;
 };

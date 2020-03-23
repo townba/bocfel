@@ -1,4 +1,4 @@
-.Dd February 27, 2012
+.Dd December 1, 2012
 .Dt BOCFEL 6
 .Os
 .Sh NAME
@@ -7,7 +7,7 @@
 .Aq http://bocfel.googlecode.com/
 .Sh SYNOPSIS
 .Nm
-.Op Fl cCdDefgGklLmrstUxXy
+.Op Fl cCdDefgGklLmrstUxXyY
 .Op Fl a Ar eval_stack_size
 .Op Fl A Ar call_stack_size
 .Op Fl E Ar escape_string
@@ -312,7 +312,7 @@ the game provides support for it.  See the
 .Sx META COMMANDS
 section for more information.
 .Pp
-The default value is 10. A value of zero disables undo, and a negative
+The default value is 100. A value of zero disables undo, and a negative
 value provides unlimited undo. This is probably a bad idea.
 .It Fl U
 One of the ways that undo slots (see
@@ -351,6 +351,17 @@ the VERSION command.
 When transcripting is turned on and an existing file is selected, that
 file is appended to rather than overwritten. This option causes the file
 to be overwritten.
+.It Fl Y
+In almost all games, either the game's UNDO command or the
+.Sy /undo
+meta command will work.  However, if you encounter a game where undo
+appears broken, try using this option.  It will instruct
+.Nm
+to ignore the game's undo code, instead using only its own undo
+handling.  This might work if the game's undo handling is subpar, either
+by design or by accident.  Note that if this option is active,
+.Sy /undo
+must be used instead of the game's UNDO command.
 .It Fl z Ar seed
 Provide a seed to the pseudo\-random number generator, causing it to
 yield predictable values. This option is probably only of use to game
@@ -454,6 +465,8 @@ disable_abbreviations (b)
 enable_censorship (b)
 .It
 overwrite_transcript (b)
+.It
+override_undo (b)
 .It
 random_seed (n)
 .It
@@ -592,6 +605,56 @@ Restore a game saved by
 Do not attempt to use
 .Sy /restore
 to restore games saved with a normal SAVE command.
+.It Sy /ps
+Push a save state onto the in-memory stack.
+.Pp
+This is meant to serve as an alternative to on-disk save files for when
+you are trying something dangerous in a game.  In such a case, there is
+generally no need for a save file to be stored on the disk because the
+save state is not meant to be persistent: it only needs to last long
+enough to be restored in the same session.
+.Pp
+Because a stack is used,
+.Sy /ps
+can be used multiple times, allowing you to jump backward as many times
+as there are states.  The maximum number of states stored is 25.  Once
+this number of states is reached, each new state causes the oldest state
+to be dropped.
+.It Sy /ps [description]
+Identical to
+.Sy /ps ,
+except that when the save state is displayed by
+.Sy /ls ,
+the supplied description is shown rather than the time of the save.
+.Pp
+Please note that at the current time, any characters which are not
+printable ASCII characters will be replaced with a question mark.
+.It Sy /pop
+Restore the last-stored in-memory save state, as created by
+.Sy /ps ,
+removing it from the stack.
+.It Sy /pop [slot]
+Restore the specified in-memory save slot.  [slot] must correspond to
+one of the slot numbers shown by
+.Sy /ls .
+The specified save, as well as any newer saves, will be removed from the
+stack.
+.It Sy /ls
+List all available in-memory save states.  Each state is shown either as
+a string representing the time when the state was saved, or, if it was
+supplied, the description passed to
+.Sy /ps .
+The last-listed state, which is marked with an asterisk, is the default
+state which will be restored with
+.Sy /pop .
+.It Sy /disable
+Disable meta commands for the remainder of the session.  This is useful
+if the game itself expects input to start with a slash character.
+.It Sy /say [command]
+Pretend like [command] was typed.  As with
+.Sy /disable ,
+this is meant for games which expect input to start with a slash
+character.
 .El
 .Pp
 Please note that
@@ -599,6 +662,24 @@ Please note that
 and
 .Sy /restore
 are experimental.
+.Pp
+Mixing in-memory saves with undo can have odd effects.  For example, if
+a save state is pushed, and undo is then called multiple times,
+returning to a point which occurred before the
+.Sy /ps
+call, popping the save state will still jump to the
+.Sy /ps
+save position, effectively cancelling the undo calls.  The undo states
+will not be recreated.  Similarly, if undo is called right after
+.Sy /pop ,
+it will succeed, but will not undo the
+.Sy /pop
+call.  Instead, the effect is the same as if undo had been called on the
+turn
+.Em before
+.Sy /pop
+was called.  This is because meta commands are not considered game
+commands and thus do not cause undo states to be stored.
 .Sh SOUND EFFECTS
 Currently, sound effects are only available when Gargoyle is used as the
 Glk implementation.  The sound effects should be bundled in a Blorb
@@ -620,33 +701,11 @@ same value. The idea behind this is to prevent hunger and thirst
 counters from forcing you to eat and drink.
 .Pp
 Cheating is only available through the configuration file, and is
-treated like any configuration variable. Following is an example which
-contains the only five cheats I've taken the time to figure out so far:
-.Bd -literal -offset indent
-# Enchanter
-[29\-860820]
-# Always able to drink, but never dying of thirst.
-cheat = freezew:0x24c5:50
-# Always able to eat, but never dying of hunger.
-cheat = freezew:0x24bf:50
-
-# Alternative (perhaps better) method for the above:
-
-# The "water object" never diminishes.
-cheat = freezew:0x1c09:4
-# The "bread object" never diminishes.
-cheat = freezew:0xf68:8
-
-# Cutthroats
-[23\-840809]
-# Never thirsty.
-cheat = freezew:0x24be:100
-.Ed
-.Pp
-The syntax is as follows:
+treated like any other configuration variable.  The syntax is as
+follows:
 .Pf freezew: Sy address : Ns Sy value .
 .Pp
-This causes the word (a 16\-bit value) at address
+This causes the word (an unsigned 16\-bit value) at address
 .Sy address
 to always contain the value
 .Sy value .
@@ -662,15 +721,15 @@ where
 is a hexadecimal value in the range [0, ef], corresponding to global
 variables 0 to 239.
 .Pp
-An explanation of how to figure out cheats is beyond the scope of this
-document.
+Example:
+.Bd -literal -offset indent
+cheat = freezew:0xabcd:0
+cheat = freezew:G00:0
+.Ed
 .Pp
-The above cheats for
-.Em Enchanter
-and
-.Em Cutthroats
-have not been extensively tested. They may render the games unwinnable.
-Use at your own risk.
+Visit https://code.google.com/p/bocfel/wiki/Cheats for a list of a few
+cheats for some Infocom games.  An explanation of how to figure out
+cheats is beyond the scope of this document.
 .Pp
 Please note that it is possible for
 .Nm

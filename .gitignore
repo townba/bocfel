@@ -1,0 +1,8 @@
+*.o
+.*.swp
+zterp
+bocfel
+gen
+gargoyle
+cheapglk*
+glktermw*

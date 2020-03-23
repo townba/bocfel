@@ -1,10 +1,17 @@
-SRCS=	blorb.c branch.c dict.c iff.c io.c math.c memory.c objects.c osdep.c process.c random.c screen.c stack.c table.c unicode.c util.c zoom.c zterp.c
+SRCS=	blorb.c branch.c dict.c iff.c io.c math.c memory.c objects.c osdep.c process.c random.c screen.c stack.c unicode.c util.c zoom.c zterp.c
 OBJS=	$(SRCS:%.c=%.o)
 
 include config.mk
 include compiler.mk
 
 CFLAGS+=	-g
+
+ifdef FAST
+  GLK=
+  PLATFORM=
+  NO_SAFETY_CHECKS=1
+  NO_CHEAT=1
+endif
 
 ifdef GLK
   SRCS+=	glkstart.c
@@ -24,7 +31,9 @@ ifeq ($(PLATFORM), unix)
 ifndef GLK
   LDADD+=	-lcurses
 endif
-else ifeq ($(PLATFORM), win32)
+endif
+
+ifeq ($(PLATFORM), win32)
   MACROS+=	-DZTERP_WIN32
 endif
 
