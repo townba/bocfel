@@ -1,4 +1,4 @@
-.TH "Bocfel" "6" "0.5.3" "Chris Spiegel" ""
+.TH "Bocfel" "6" "0.5.4" "Chris Spiegel" ""
 .SH "NAME"
 \fBbocfel\fR \-\- Z\-machine interpreter (http://bocfel.googlecode.com/)
 .SH "SYNTAX"
@@ -265,7 +265,9 @@ cheat = freezew:0x24be:100
 .TP 
 The syntax is as follows: freezew:\fBaddress\fR:\fBvalue\fR.
 .TP 
-This causes the word (a 16\-bit value) at address \fBaddress\fR to always contain the value \fBvalue\fR. The address must be specified in hexadecimal, with an optional leading 0x; the value is decimal. An explanation of how to figure out cheats is beyond the scope of this document.
+This causes the word (a 16\-bit value) at address \fBaddress\fR to always contain the value \fBvalue\fR. The address must be specified in hexadecimal, with an optional leading 0x; the value is interpreted as an integer constant in C: leading 0x means hexadecimal, leading 0 means octal, otherwise decimal.  Alternatively, instead of an actual address for \fBaddress\fR, a global variable can be specified.  This has the syntax \fBGxx\fR, where \fBxx\fR is a hexadecimal value in the range [0, 239], corresponding to global variables 0 to 239.
+.TP
+An explanation of how to figure out cheats is beyond the scope of this document.
 .TP 
 The above cheats for Enchanter and Cutthroats have not been extensively tested. They may render the games unwinnable. Use at your own risk.
 .TP 

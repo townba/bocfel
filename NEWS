@@ -1,3 +1,10 @@
+0.5.4
+• Fix a rather obscure bug triggered when @restart is called inside an
+  interrupt.
+• Improved resilience in the face of utterly broken story files.
+• Minor improvements to the syntax for cheats.
+• Improved handling of the configuration file on Windows.
+
 0.5.3
 • The initial random seed can now be read from a device such as /dev/random.
 • Support for Z-machine versions 1 and 2 is now built unconditionally.
