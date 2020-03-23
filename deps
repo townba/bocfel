@@ -12,6 +12,7 @@ memory.o: memory.h util.h meta.h zterp.h branch.h process.h screen.h
 objects.o: objects.h branch.h memory.h util.h meta.h zterp.h process.h
 objects.o: screen.h
 osdep.o: osdep.h screen.h
+patches.o: patches.h memory.h util.h meta.h zterp.h
 process.o: process.h branch.h dict.h math.h memory.h util.h meta.h zterp.h
 process.o: objects.h random.h screen.h sound.h stack.h io.h zoom.h
 random.o: random.h process.h util.h zterp.h
@@ -24,5 +25,5 @@ unicode.o: unicode.h memory.h util.h meta.h zterp.h
 util.o: util.h process.h screen.h unicode.h zterp.h help.h
 zoom.o: zoom.h screen.h zterp.h
 zterp.o: zterp.h blorb.h io.h branch.h memory.h util.h meta.h osdep.h
-zterp.o: process.h random.h screen.h sound.h stack.h unicode.h
+zterp.o: patches.h process.h random.h screen.h sound.h stack.h unicode.h
 glkstart.o: util.h zterp.h help.h

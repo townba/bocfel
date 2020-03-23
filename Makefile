@@ -1,4 +1,4 @@
-SRCS=	blorb.c branch.c dict.c iff.c io.c math.c meta.c memory.c objects.c osdep.c process.c random.c screen.c sound.c stack.c unicode.c util.c zoom.c zterp.c
+SRCS=	blorb.c branch.c dict.c iff.c io.c math.c meta.c memory.c objects.c osdep.c patches.c process.c random.c screen.c sound.c stack.c unicode.c util.c zoom.c zterp.c
 OBJS=	$(SRCS:%.c=%.o)
 
 include config.mk
@@ -76,5 +76,8 @@ depend:
 
 tags: $(SRCS)
 	ctags -I ZASSERT --c-kinds=+l $^ *.h
+
+bocfel.html: bocfel.6
+	mandoc -Thtml -Ostyle=mandoc.css -Ios= $< > $@
 
 include deps

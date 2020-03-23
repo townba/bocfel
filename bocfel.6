@@ -1,4 +1,4 @@
-.Dd June 24, 2015
+.Dd December 6, 2017
 .Dt BOCFEL 6
 .Os
 .Sh NAME
@@ -7,10 +7,11 @@
 .Aq Lk http://bocfel.org/
 .Sh SYNOPSIS
 .Nm
-.Op Fl cCdDefgGhkmrstUxXyY
+.Op Fl cCdDefgGhkmprstUxXyY
 .Op Fl a Ar eval_stack_size
 .Op Fl A Ar call_stack_size
 .Op Fl E Ar escape_string
+.Op Fl l Ar username
 .Op Fl n Ar number
 .Op Fl N Ar version
 .Op Fl R Ar replay_filename
@@ -160,6 +161,20 @@ also claims the up arrow, which means that history browsing, in Glk
 implementations that support it, might not be able to be initiated with
 the up arrow.  This option disables the use of terminating keys.  Note
 that not all Glk implementations support terminating keys.
+.It Fl l Ar username
+Set the username by writing up to 8 bytes to the location
+.Sy 0x38
+in the story file. This is not officially part of the Z-machine, but is
+at least used by
+.Em Hollywood Hijinx ,
+where a username starting with either
+.Dq DA
+or
+.Dq TOMAS
+enables the debugging command
+.Dq flush 33
+which moves you to a junction room which leads to various other
+locations, allowing puzzles to be bypassed.
 .It Fl m
 Disable meta commands.  See
 .Sx META COMMANDS
@@ -227,6 +242,10 @@ the user asks a game to either report its version or to verify its disk
 image. In these cases, the version is simply printed out, nothing more.
 This is a single character and there is no real reason to change it. The
 default is C.
+.It Fl p
+.Nm
+includes patches to work around some known bugs in games.  This flag
+disables such patches.
 .It Fl r
 Play back a command record (see
 .Fl s )
@@ -433,6 +452,8 @@ enable_alt_graphics (b)
 .It
 disable_term_keys (b)
 .It
+username (s)
+.It
 disable_meta_commands (b)
 .It
 max_saves (n)
@@ -442,6 +463,8 @@ disable_undo_compression (b)
 int_number (n)
 .It
 int_version (c)
+.It
+disable_patches (b)
 .It
 replay_on (b)
 .It
@@ -698,9 +721,8 @@ commands and thus do not cause undo states to be stored.
 The
 .Sy /debug
 command starts a debugging operation.  For some debugging operations, an
-.Em extended address
-is expected.  This is either an absolute address, specified in
-hexadecimal with an optional lading
+address is expected.  This is either an absolute address, specified in
+hexadecimal with an optional leading
 .Sy 0x ,
 or it is a global variable.  Global variables have the syntax
 .Sy Gxx ,
@@ -758,8 +780,7 @@ criteria.  This is a separate operation because initial scans will
 potentially match thousands of addresses.
 .It Sy print [address]
 Print the word (as both signed decimal and unsigned hexadecimal) at
-.Sy address ,
-which is an extended address.
+.Sy address .
 .It Sy freeze [address] [value]
 Freeze a 16-bit value in memory; this is analogous to the
 .Sy freeze
@@ -769,14 +790,17 @@ configuration variable (see
 is the address to freeze, and
 .Sy value
 is the value it should be frozen to.
-.Sy address
-is an extended address, and
 .Sy value
 can be decimal, hexadecimal, or octal, with a leading
 .Sy 0x
 signifying hexadecimal and a leading
 .Sy 0
 signifying octal.
+.Pp
+Please note that it is possible for
+.Nm
+to be built without cheating support, so this and related commands might
+not work.
 .It Sy unfreeze [address]
 Unfreeze the 16-bit value which is frozen at
 .Sy address ;
@@ -787,10 +811,12 @@ It is not an error to unfreeze an unfrozen value.
 Display all frozen values.
 .It Sy watch [address]
 Report any changes to the 16-bit word at
-.Sy address ,
-which is an extended address.  Please note that it is possible for
+.Sy address .
+.Pp
+Please note that it is possible for
 .Nm
-to be built without watch support, so this command might not work.
+to be built without watch support, so this and related commands might
+not work.
 .It Sy watch all
 Watch every address for changes.  This will likely produce a lot of
 output.
@@ -839,9 +865,8 @@ This causes the word (an unsigned 16\-bit value) at address
 .Sy address
 to always contain the value
 .Sy value ;
-.Sy address
-is an extended address while value can be decimal, hexadecimal, or
-octal, with a leading
+.Sy value
+can be decimal, hexadecimal, or octal, with a leading
 .Sy 0x
 signifying hexadecimal and a leading
 .Sy 0
@@ -874,8 +899,8 @@ option can be used to determine whether this is the case.
 .Xr nitfol 6
 .Sh STANDARDS
 .Nm
-is believed to comply fully with version 1.1 of the
-.Em Z\-machine Standards Document ;
+is believed to comply fully with version 1.1 of
+.Em The Z\-machine Standards Document ;
 see
 .Lk http://www.inform-fiction.org/zmachine/standards/z1point0/index.html
 and
