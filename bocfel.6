@@ -1,4 +1,4 @@
-.TH "Bocfel" "6" "0.5.0" "Chris Spiegel" ""
+.TH "Bocfel" "6" "0.5.1" "Chris Spiegel" ""
 .SH "NAME"
 \fBbocfel\fR \-\- Z\-machine interpreter (http://bocfel.googlecode.com/)
 .SH "SYNTAX"
@@ -113,9 +113,9 @@ The default value is 10. A value of zero disables undo, and a negative value pro
 .TP 
 \fB\-U\fR
 One of the ways that undo slots (see \fB\-u\fR) save memory is to use compression. On modern machines the compression time is minuscule and not noticeable. On slower systems, however, it is possible that the compression will be noticeable. This option disables compression, but be aware that without compression, the size really balloons: save slots in Anchorhead, with compression, take up about 900 bytes on game startup. Without compression they take up over 40000 bytes.
-.TP
+.TP 
 \fB\-v\fR
-Display version information and show which compile-time options are set.
+Display version information and show which compile\-time options are set.
 .TP 
 \fB\-x\fR
 Most games include abbreviations for commonly\-used commands: x for EXAMINE, g for AGAIN, and z for WAIT. Some early Infocom games, however, do not provide these. By default, x, g, and z are mapped to their respective commands regardless of whether the game provides them. In the unlikely event that a game requires one of these letters for its own use, apart from an abbreviation, these abbreviations can be turned off with \fB\-x\fR.
@@ -241,11 +241,11 @@ cheat = freezew:0x24bf:50
 # Alternative (perhaps better) method for the above:
 
 # The "water object" never diminishes.
-.br
+.br 
 cheat = freezew:0x1c09:4
-.br
+.br 
 # The "bread object" never diminishes.
-.br
+.br 
 cheat = freezew:0xf68:8
 
 # Cutthroats
@@ -261,13 +261,11 @@ The syntax is as follows: freezew:\fBaddress\fR:\fBvalue\fR.
 This causes the word (a 16\-bit value) at address \fBaddress\fR to always contain the value \fBvalue\fR. The address must be specified in hexadecimal, with an optional leading 0x; the value is decimal. An explanation of how to figure out cheats is beyond the scope of this document.
 .TP 
 The above cheats for Enchanter and Cutthroats have not been extensively tested. They may render the games unwinnable. Use at your own risk.
-.TP
-Please note that it is possible for \fBBocfel\fR to be built without support for cheating, in which case these cheats will silently do nothing.  The \fB-v\fR option can be used to determine whether this is the case.
+.TP 
+Please note that it is possible for \fBBocfel\fR to be built without support for cheating, in which case these cheats will silently do nothing.  The \fB\-v\fR option can be used to determine whether this is the case.
 .SH "AUTHORS"
 Chris Spiegel <cspiegel@gmail.com>
 .SH "SEE ALSO"
 frotz(6), nitfol(6), fizmo(6), iconv(1)
 .SH "STANDARDS"
-\fBBocfel\fR is believed to comply fully with version 1.0 of the Z\-machine Standards Document; see http://www.inform\-fiction.org/zmachine/standards/z1point0/index.html.
-
-Many aspect of version 1.1 of the standard are also implemented. However, \fBbocfel\fR still claims only to be compliant with version 1.0.
+\fBBocfel\fR is believed to comply fully with version 1.1 of the Z\-machine Standards Document; see http://www.inform\-fiction.org/zmachine/standards/z1point0/index.html and http://ifarchive.org/if\-archive/infocom/interpreters/specification/ZSpec11.txt.

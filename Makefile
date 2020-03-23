@@ -53,7 +53,7 @@ bocfel: $(OBJS)
 	$(CC) $(OPT) -o $@ $^ $(LDADD)
 
 clean:
-	rm -f bocfel t.z3 t.z5 *.o
+	rm -f bocfel *.o
 
 install: bocfel
 	mkdir -p $(DESTDIR)$(BINDIR) $(DESTDIR)$(MANDIR)
