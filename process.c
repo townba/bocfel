@@ -30,9 +30,11 @@
 #include "dict.h"
 #include "math.h"
 #include "memory.h"
+#include "meta.h"
 #include "objects.h"
 #include "random.h"
 #include "screen.h"
+#include "sound.h"
 #include "stack.h"
 #include "util.h"
 #include "zoom.h"
@@ -50,43 +52,39 @@ static size_t njumps;
  * interrupts, 1 if one interrupt has been called, 2 if an interrupt was
  * called inside of an interrupt, and so on.
  */
-static long ilevel = -1;
+static size_t ilevel = -1;
 
-long interrupt_level(void)
+int in_interrupt(void)
 {
-  return ilevel;
+  return ilevel > 0;
 }
 
-/* When this is called, the interrupt at level “level” will stop
- * running: if a single interrupt is running, then break_from(1) will
- * stop the interrupt, going back to the main program.  Breaking from
- * interrupt level 0 (which is not actually an interrupt) will end the
- * program.  This is how @quit is implemented.
+/* Jump back to the previous round of interpreting.  This is used when
+ * an interrupt routine returns.
  */
-void break_from(long level)
+znoreturn
+void interrupt_return(void)
 {
-  ilevel = level - 1;
-  longjmp(jumps[level], 1);
+  longjmp(jumps[ilevel--], 1);
 }
 
-/* To signal a restart, longjmp() is called with 2; this advises
- * process_instructions() to restart the story file and then continue
- * execution, whereas a value of 1 tells it to return immediately.
+/* Jump back to the first round of processing.  This is used when
+ * restoring and restarting in case these happen while in an interrupt.
  */
-static void zrestart(void)
+znoreturn
+void interrupt_reset(void)
 {
   ilevel = 0;
   longjmp(jumps[0], 2);
 }
 
-/* If a restore happens inside of an interrupt, the level needs to be
- * set back to 0; to differentiate from a restart, call longjmp() with a
- * value of 3.
+/* Jump back to the first round of processing, but tell it to
+ * immediately stop.  This is used to implement @quit.
  */
-void reset_level(void)
+znoreturn
+void interrupt_quit(void)
 {
-  ilevel = 0;
-  longjmp(jumps[0], 3);
+  longjmp(jumps[0], 1);
 }
 
 /* Returns 1 if decoded, 0 otherwise (omitted) */
@@ -122,12 +120,12 @@ static void decode_var(uint8_t types)
   }
 }
 
-/* op[0] is 0OP, op[1] is 1OP, etc */
-static void (*op[5][256])(void);
-static const char *opnames[5][256];
-enum { ZERO, ONE, TWO, VAR, EXT };
+static void (*opcodes[256])(void);
+static void (*ext_opcodes[256])(void);
+enum opcount { ZERO, ONE, TWO, VAR, EXT };
 
-#define op_call(opt, opnumber)	(op[opt][opnumber]())
+#define op_call(opcode)		opcodes[opcode]()
+#define extended_call(opcode)	ext_opcodes[opcode]()
 
 /* This nifty trick is from Frotz. */
 static void zextended(void)
@@ -136,17 +134,10 @@ static void zextended(void)
 
   decode_var(BYTE(pc++));
 
-  /* §14.2.1
-   * The exception for 0x80–0x83 is for the Zoom extensions.
-   * Standard 1.1 implicitly updates §14.2.1 to recommend ignoring
-   * opcodes in the range EXT:30 to EXT:255, due to the fact that
-   * @buffer_screen is EXT:29.
-   */
-  if(opnumber > 0x1d && (opnumber < 0x80 || opnumber > 0x83)) return;
-
-  op_call(EXT, opnumber);
+  extended_call(opnumber);
 }
 
+znoreturn
 static void illegal_opcode(void)
 {
 #ifndef ZTERP_NO_SAFETY_CHECKS
@@ -156,150 +147,179 @@ static void illegal_opcode(void)
 #endif
 }
 
+static void setup_single_opcode(int minver, int maxver, enum opcount opcount, int opcode, void (*fn)(void))
+{
+  if(zversion < minver || zversion > maxver) return;
+
+  switch(opcount)
+  {
+    case ZERO:
+      opcodes[opcode + 176] = fn;
+      break;
+    case ONE:
+      opcodes[opcode + 128] = fn;
+      opcodes[opcode + 144] = fn;
+      opcodes[opcode + 160] = fn;
+      break;
+    case TWO:
+      opcodes[opcode +   0] = fn;
+      opcodes[opcode +  32] = fn;
+      opcodes[opcode +  64] = fn;
+      opcodes[opcode +  96] = fn;
+      opcodes[opcode + 192] = fn;
+      break;
+    case VAR:
+      opcodes[opcode + 224] = fn;
+      break;
+    case EXT:
+      ext_opcodes[opcode] = fn;
+      break;
+  }
+}
+
 void setup_opcodes(void)
 {
-  for(int i = 0; i < 5; i++)
+  for(int opcode = 0; opcode < 256; opcode++)
   {
-    for(int j = 0; j < 256; j++)
-    {
-      op[i][j] = illegal_opcode;
-    }
+    opcodes[opcode] = illegal_opcode;
+
+    /* §14.2.1 */
+    ext_opcodes[opcode] = znop;
   }
-#define OP(minver, maxver, args, opcode, fn) do { if(zversion >= minver && zversion <= maxver) op[args][opcode] = fn; opnames[args][opcode] = #fn; } while(0)
-  OP(1, 6, ZERO, 0x00, zrtrue);
-  OP(1, 6, ZERO, 0x01, zrfalse);
-  OP(1, 6, ZERO, 0x02, zprint);
-  OP(1, 6, ZERO, 0x03, zprint_ret);
-  OP(1, 6, ZERO, 0x04, znop);
-  OP(1, 4, ZERO, 0x05, zsave);
-  OP(1, 4, ZERO, 0x06, zrestore);
-  OP(1, 6, ZERO, 0x07, zrestart);
-  OP(1, 6, ZERO, 0x08, zret_popped);
-  OP(1, 4, ZERO, 0x09, zpop);
-  OP(5, 6, ZERO, 0x09, zcatch);
-  OP(1, 6, ZERO, 0x0a, zquit);
-  OP(1, 6, ZERO, 0x0b, znew_line);
-  OP(3, 3, ZERO, 0x0c, zshow_status);
-  OP(4, 6, ZERO, 0x0c, znop); /* §15: Technically illegal in V4+, but a V5 Wishbringer accidentally uses this opcode. */
-  OP(3, 6, ZERO, 0x0d, zverify);
-  OP(5, 6, ZERO, 0x0e, zextended);
-  OP(5, 6, ZERO, 0x0f, zpiracy);
 
-  OP(1, 6, ONE, 0x00, zjz);
-  OP(1, 6, ONE, 0x01, zget_sibling);
-  OP(1, 6, ONE, 0x02, zget_child);
-  OP(1, 6, ONE, 0x03, zget_parent);
-  OP(1, 6, ONE, 0x04, zget_prop_len);
-  OP(1, 6, ONE, 0x05, zinc);
-  OP(1, 6, ONE, 0x06, zdec);
-  OP(1, 6, ONE, 0x07, zprint_addr);
-  OP(4, 6, ONE, 0x08, zcall_1s);
-  OP(1, 6, ONE, 0x09, zremove_obj);
-  OP(1, 6, ONE, 0x0a, zprint_obj);
-  OP(1, 6, ONE, 0x0b, zret);
-  OP(1, 6, ONE, 0x0c, zjump);
-  OP(1, 6, ONE, 0x0d, zprint_paddr);
-  OP(1, 6, ONE, 0x0e, zload);
-  OP(1, 4, ONE, 0x0f, znot);
-  OP(5, 6, ONE, 0x0f, zcall_1n);
+  setup_single_opcode(1, 6, ZERO, 0x00, zrtrue);
+  setup_single_opcode(1, 6, ZERO, 0x01, zrfalse);
+  setup_single_opcode(1, 6, ZERO, 0x02, zprint);
+  setup_single_opcode(1, 6, ZERO, 0x03, zprint_ret);
+  setup_single_opcode(1, 6, ZERO, 0x04, znop);
+  setup_single_opcode(1, 4, ZERO, 0x05, zsave);
+  setup_single_opcode(1, 4, ZERO, 0x06, zrestore);
+  setup_single_opcode(1, 6, ZERO, 0x07, zrestart);
+  setup_single_opcode(1, 6, ZERO, 0x08, zret_popped);
+  setup_single_opcode(1, 4, ZERO, 0x09, zpop);
+  setup_single_opcode(5, 6, ZERO, 0x09, zcatch);
+  setup_single_opcode(1, 6, ZERO, 0x0a, zquit);
+  setup_single_opcode(1, 6, ZERO, 0x0b, znew_line);
+  setup_single_opcode(3, 3, ZERO, 0x0c, zshow_status);
+  setup_single_opcode(4, 6, ZERO, 0x0c, znop); /* §15: Technically illegal in V4+, but a V5 Wishbringer accidentally uses this opcode. */
+  setup_single_opcode(3, 6, ZERO, 0x0d, zverify);
+  setup_single_opcode(5, 6, ZERO, 0x0e, zextended);
+  setup_single_opcode(5, 6, ZERO, 0x0f, zpiracy);
 
-  OP(1, 6, TWO, 0x01, zje);
-  OP(1, 6, TWO, 0x02, zjl);
-  OP(1, 6, TWO, 0x03, zjg);
-  OP(1, 6, TWO, 0x04, zdec_chk);
-  OP(1, 6, TWO, 0x05, zinc_chk);
-  OP(1, 6, TWO, 0x06, zjin);
-  OP(1, 6, TWO, 0x07, ztest);
-  OP(1, 6, TWO, 0x08, zor);
-  OP(1, 6, TWO, 0x09, zand);
-  OP(1, 6, TWO, 0x0a, ztest_attr);
-  OP(1, 6, TWO, 0x0b, zset_attr);
-  OP(1, 6, TWO, 0x0c, zclear_attr);
-  OP(1, 6, TWO, 0x0d, zstore);
-  OP(1, 6, TWO, 0x0e, zinsert_obj);
-  OP(1, 6, TWO, 0x0f, zloadw);
-  OP(1, 6, TWO, 0x10, zloadb);
-  OP(1, 6, TWO, 0x11, zget_prop);
-  OP(1, 6, TWO, 0x12, zget_prop_addr);
-  OP(1, 6, TWO, 0x13, zget_next_prop);
-  OP(1, 6, TWO, 0x14, zadd);
-  OP(1, 6, TWO, 0x15, zsub);
-  OP(1, 6, TWO, 0x16, zmul);
-  OP(1, 6, TWO, 0x17, zdiv);
-  OP(1, 6, TWO, 0x18, zmod);
-  OP(4, 6, TWO, 0x19, zcall_2s);
-  OP(5, 6, TWO, 0x1a, zcall_2n);
-  OP(5, 6, TWO, 0x1b, zset_colour);
-  OP(5, 6, TWO, 0x1c, zthrow);
+  setup_single_opcode(1, 6, ONE, 0x00, zjz);
+  setup_single_opcode(1, 6, ONE, 0x01, zget_sibling);
+  setup_single_opcode(1, 6, ONE, 0x02, zget_child);
+  setup_single_opcode(1, 6, ONE, 0x03, zget_parent);
+  setup_single_opcode(1, 6, ONE, 0x04, zget_prop_len);
+  setup_single_opcode(1, 6, ONE, 0x05, zinc);
+  setup_single_opcode(1, 6, ONE, 0x06, zdec);
+  setup_single_opcode(1, 6, ONE, 0x07, zprint_addr);
+  setup_single_opcode(4, 6, ONE, 0x08, zcall_1s);
+  setup_single_opcode(1, 6, ONE, 0x09, zremove_obj);
+  setup_single_opcode(1, 6, ONE, 0x0a, zprint_obj);
+  setup_single_opcode(1, 6, ONE, 0x0b, zret);
+  setup_single_opcode(1, 6, ONE, 0x0c, zjump);
+  setup_single_opcode(1, 6, ONE, 0x0d, zprint_paddr);
+  setup_single_opcode(1, 6, ONE, 0x0e, zload);
+  setup_single_opcode(1, 4, ONE, 0x0f, znot);
+  setup_single_opcode(5, 6, ONE, 0x0f, zcall_1n);
 
-  OP(1, 6, VAR, 0x00, zcall);
-  OP(1, 6, VAR, 0x01, zstorew);
-  OP(1, 6, VAR, 0x02, zstoreb);
-  OP(1, 6, VAR, 0x03, zput_prop);
-  OP(1, 6, VAR, 0x04, zread);
-  OP(1, 6, VAR, 0x05, zprint_char);
-  OP(1, 6, VAR, 0x06, zprint_num);
-  OP(1, 6, VAR, 0x07, zrandom);
-  OP(1, 6, VAR, 0x08, zpush);
-  OP(1, 6, VAR, 0x09, zpull);
-  OP(3, 6, VAR, 0x0a, zsplit_window);
-  OP(3, 6, VAR, 0x0b, zset_window);
-  OP(4, 6, VAR, 0x0c, zcall_vs2);
-  OP(4, 6, VAR, 0x0d, zerase_window);
-  OP(4, 6, VAR, 0x0e, zerase_line);
-  OP(4, 6, VAR, 0x0f, zset_cursor);
-  OP(4, 6, VAR, 0x10, zget_cursor);
-  OP(4, 6, VAR, 0x11, zset_text_style);
-  OP(4, 6, VAR, 0x12, znop); /* XXX buffer_mode */
-  OP(3, 6, VAR, 0x13, zoutput_stream);
-  OP(3, 6, VAR, 0x14, zinput_stream);
-  OP(3, 6, VAR, 0x15, zsound_effect);
-  OP(4, 6, VAR, 0x16, zread_char);
-  OP(4, 6, VAR, 0x17, zscan_table);
-  OP(5, 6, VAR, 0x18, znot);
-  OP(5, 6, VAR, 0x19, zcall_vn);
-  OP(5, 6, VAR, 0x1a, zcall_vn2);
-  OP(5, 6, VAR, 0x1b, ztokenise);
-  OP(5, 6, VAR, 0x1c, zencode_text);
-  OP(5, 6, VAR, 0x1d, zcopy_table);
-  OP(5, 6, VAR, 0x1e, zprint_table);
-  OP(5, 6, VAR, 0x1f, zcheck_arg_count);
+  setup_single_opcode(1, 6, TWO, 0x01, zje);
+  setup_single_opcode(1, 6, TWO, 0x02, zjl);
+  setup_single_opcode(1, 6, TWO, 0x03, zjg);
+  setup_single_opcode(1, 6, TWO, 0x04, zdec_chk);
+  setup_single_opcode(1, 6, TWO, 0x05, zinc_chk);
+  setup_single_opcode(1, 6, TWO, 0x06, zjin);
+  setup_single_opcode(1, 6, TWO, 0x07, ztest);
+  setup_single_opcode(1, 6, TWO, 0x08, zor);
+  setup_single_opcode(1, 6, TWO, 0x09, zand);
+  setup_single_opcode(1, 6, TWO, 0x0a, ztest_attr);
+  setup_single_opcode(1, 6, TWO, 0x0b, zset_attr);
+  setup_single_opcode(1, 6, TWO, 0x0c, zclear_attr);
+  setup_single_opcode(1, 6, TWO, 0x0d, zstore);
+  setup_single_opcode(1, 6, TWO, 0x0e, zinsert_obj);
+  setup_single_opcode(1, 6, TWO, 0x0f, zloadw);
+  setup_single_opcode(1, 6, TWO, 0x10, zloadb);
+  setup_single_opcode(1, 6, TWO, 0x11, zget_prop);
+  setup_single_opcode(1, 6, TWO, 0x12, zget_prop_addr);
+  setup_single_opcode(1, 6, TWO, 0x13, zget_next_prop);
+  setup_single_opcode(1, 6, TWO, 0x14, zadd);
+  setup_single_opcode(1, 6, TWO, 0x15, zsub);
+  setup_single_opcode(1, 6, TWO, 0x16, zmul);
+  setup_single_opcode(1, 6, TWO, 0x17, zdiv);
+  setup_single_opcode(1, 6, TWO, 0x18, zmod);
+  setup_single_opcode(4, 6, TWO, 0x19, zcall_2s);
+  setup_single_opcode(5, 6, TWO, 0x1a, zcall_2n);
+  setup_single_opcode(5, 6, TWO, 0x1b, zset_colour);
+  setup_single_opcode(5, 6, TWO, 0x1c, zthrow);
 
-  OP(5, 6, EXT, 0x00, zsave5);
-  OP(5, 6, EXT, 0x01, zrestore5);
-  OP(5, 6, EXT, 0x02, zlog_shift);
-  OP(5, 6, EXT, 0x03, zart_shift);
-  OP(5, 6, EXT, 0x04, zset_font);
-  OP(6, 6, EXT, 0x05, znop); /* XXX draw_picture */
-  OP(6, 6, EXT, 0x06, zpicture_data);
-  OP(6, 6, EXT, 0x07, znop); /* XXX erase_picture */
-  OP(6, 6, EXT, 0x08, znop); /* XXX set_margins */
-  OP(5, 6, EXT, 0x09, zsave_undo);
-  OP(5, 6, EXT, 0x0a, zrestore_undo);
-  OP(5, 6, EXT, 0x0b, zprint_unicode);
-  OP(5, 6, EXT, 0x0c, zcheck_unicode);
-  OP(5, 6, EXT, 0x0d, zset_true_colour);
-  OP(6, 6, EXT, 0x10, znop); /* XXX move_window */
-  OP(6, 6, EXT, 0x11, znop); /* XXX window_size */
-  OP(6, 6, EXT, 0x12, znop); /* XXX window_style */
-  OP(6, 6, EXT, 0x13, zget_wind_prop);
-  OP(6, 6, EXT, 0x14, znop); /* XXX scroll_window */
-  OP(6, 6, EXT, 0x15, zpop_stack);
-  OP(6, 6, EXT, 0x16, znop); /* XXX read_mouse */
-  OP(6, 6, EXT, 0x17, znop); /* XXX mouse_window */
-  OP(6, 6, EXT, 0x18, zpush_stack);
-  OP(6, 6, EXT, 0x19, znop); /* XXX put_wind_prop */
-  OP(6, 6, EXT, 0x1a, zprint_form);
-  OP(6, 6, EXT, 0x1b, zmake_menu);
-  OP(6, 6, EXT, 0x1c, znop); /* XXX picture_table */
-  OP(6, 6, EXT, 0x1d, zbuffer_screen);
+  setup_single_opcode(1, 6, VAR, 0x00, zcall);
+  setup_single_opcode(1, 6, VAR, 0x01, zstorew);
+  setup_single_opcode(1, 6, VAR, 0x02, zstoreb);
+  setup_single_opcode(1, 6, VAR, 0x03, zput_prop);
+  setup_single_opcode(1, 6, VAR, 0x04, zread);
+  setup_single_opcode(1, 6, VAR, 0x05, zprint_char);
+  setup_single_opcode(1, 6, VAR, 0x06, zprint_num);
+  setup_single_opcode(1, 6, VAR, 0x07, zrandom);
+  setup_single_opcode(1, 6, VAR, 0x08, zpush);
+  setup_single_opcode(1, 6, VAR, 0x09, zpull);
+  setup_single_opcode(3, 6, VAR, 0x0a, zsplit_window);
+  setup_single_opcode(3, 6, VAR, 0x0b, zset_window);
+  setup_single_opcode(4, 6, VAR, 0x0c, zcall_vs2);
+  setup_single_opcode(4, 6, VAR, 0x0d, zerase_window);
+  setup_single_opcode(4, 6, VAR, 0x0e, zerase_line);
+  setup_single_opcode(4, 6, VAR, 0x0f, zset_cursor);
+  setup_single_opcode(4, 6, VAR, 0x10, zget_cursor);
+  setup_single_opcode(4, 6, VAR, 0x11, zset_text_style);
+  setup_single_opcode(4, 6, VAR, 0x12, znop); /* XXX buffer_mode */
+  setup_single_opcode(3, 6, VAR, 0x13, zoutput_stream);
+  setup_single_opcode(3, 6, VAR, 0x14, zinput_stream);
+  setup_single_opcode(3, 6, VAR, 0x15, zsound_effect);
+  setup_single_opcode(4, 6, VAR, 0x16, zread_char);
+  setup_single_opcode(4, 6, VAR, 0x17, zscan_table);
+  setup_single_opcode(5, 6, VAR, 0x18, znot);
+  setup_single_opcode(5, 6, VAR, 0x19, zcall_vn);
+  setup_single_opcode(5, 6, VAR, 0x1a, zcall_vn2);
+  setup_single_opcode(5, 6, VAR, 0x1b, ztokenise);
+  setup_single_opcode(5, 6, VAR, 0x1c, zencode_text);
+  setup_single_opcode(5, 6, VAR, 0x1d, zcopy_table);
+  setup_single_opcode(5, 6, VAR, 0x1e, zprint_table);
+  setup_single_opcode(5, 6, VAR, 0x1f, zcheck_arg_count);
+
+  setup_single_opcode(5, 6, EXT, 0x00, zsave5);
+  setup_single_opcode(5, 6, EXT, 0x01, zrestore5);
+  setup_single_opcode(5, 6, EXT, 0x02, zlog_shift);
+  setup_single_opcode(5, 6, EXT, 0x03, zart_shift);
+  setup_single_opcode(5, 6, EXT, 0x04, zset_font);
+  setup_single_opcode(6, 6, EXT, 0x05, znop); /* XXX draw_picture */
+  setup_single_opcode(6, 6, EXT, 0x06, zpicture_data);
+  setup_single_opcode(6, 6, EXT, 0x07, znop); /* XXX erase_picture */
+  setup_single_opcode(6, 6, EXT, 0x08, znop); /* XXX set_margins */
+  setup_single_opcode(5, 6, EXT, 0x09, zsave_undo);
+  setup_single_opcode(5, 6, EXT, 0x0a, zrestore_undo);
+  setup_single_opcode(5, 6, EXT, 0x0b, zprint_unicode);
+  setup_single_opcode(5, 6, EXT, 0x0c, zcheck_unicode);
+  setup_single_opcode(5, 6, EXT, 0x0d, zset_true_colour);
+  setup_single_opcode(6, 6, EXT, 0x10, znop); /* XXX move_window */
+  setup_single_opcode(6, 6, EXT, 0x11, znop); /* XXX window_size */
+  setup_single_opcode(6, 6, EXT, 0x12, znop); /* XXX window_style */
+  setup_single_opcode(6, 6, EXT, 0x13, zget_wind_prop);
+  setup_single_opcode(6, 6, EXT, 0x14, znop); /* XXX scroll_window */
+  setup_single_opcode(6, 6, EXT, 0x15, zpop_stack);
+  setup_single_opcode(6, 6, EXT, 0x16, znop); /* XXX read_mouse */
+  setup_single_opcode(6, 6, EXT, 0x17, znop); /* XXX mouse_window */
+  setup_single_opcode(6, 6, EXT, 0x18, zpush_stack);
+  setup_single_opcode(6, 6, EXT, 0x19, znop); /* XXX put_wind_prop */
+  setup_single_opcode(6, 6, EXT, 0x1a, zprint_form);
+  setup_single_opcode(6, 6, EXT, 0x1b, zmake_menu);
+  setup_single_opcode(6, 6, EXT, 0x1c, znop); /* XXX picture_table */
+  setup_single_opcode(6, 6, EXT, 0x1d, zbuffer_screen);
 
   /* Zoom extensions. */
-  OP(5, 6, EXT, 0x80, zstart_timer);
-  OP(5, 6, EXT, 0x81, zstop_timer);
-  OP(5, 6, EXT, 0x82, zread_timer);
-  OP(5, 6, EXT, 0x83, zprint_timer);
-#undef OP
+  setup_single_opcode(5, 6, EXT, 0x80, zstart_timer);
+  setup_single_opcode(5, 6, EXT, 0x81, zstop_timer);
+  setup_single_opcode(5, 6, EXT, 0x82, zread_timer);
+  setup_single_opcode(5, 6, EXT, 0x83, zprint_timer);
 }
 
 void process_instructions(void)
@@ -314,17 +334,7 @@ void process_instructions(void)
   {
     case 1: /* Normal break from interrupt. */
       return;
-    case 2: /* Special break: a restart was requested. */
-      {
-        /* §6.1.3: Flags2 is preserved on a restart. */
-        uint16_t flags2 = WORD(0x10);
-
-        process_story();
-
-        STORE_WORD(0x10, flags2);
-      }
-      break;
-    case 3: /* Do nothing: restore was called so keep interpreting. */
+    case 2: /* Special break: interrupt_reset() called, so keep interpreting. */
       break;
   }
 
@@ -350,8 +360,6 @@ void process_instructions(void)
 
       if(opcode & 0x20) zargs[1] = variable(BYTE(pc++));
       else              zargs[1] = BYTE(pc++);
-
-      op_call(TWO, opcode & 0x1f);
     }
 
     /* short 1OP */
@@ -359,29 +367,25 @@ void process_instructions(void)
     {
       znargs = 1;
 
-      if(opcode < 0x90) /* large constant */
+      if(opcode & 0x20) /* variable */
+      {
+        zargs[0] = variable(BYTE(pc++));
+      }
+      else if(opcode & 0x10) /* small constant */
+      {
+        zargs[0] = BYTE(pc++);
+      }
+      else /* large constant */
       {
         zargs[0] = WORD(pc);
         pc += 2;
       }
-      else if(opcode < 0xa0) /* small constant */
-      {
-        zargs[0] = BYTE(pc++);
-      }
-      else /* variable */
-      {
-        zargs[0] = variable(BYTE(pc++));
-      }
-
-      op_call(ONE, opcode & 0x0f);
     }
 
     /* short 0OP (plus EXT) */
     else if(opcode < 0xc0)
     {
       znargs = 0;
-
-      op_call(ZERO, opcode & 0x0f);
     }
 
     /* variable 2OP */
@@ -390,8 +394,6 @@ void process_instructions(void)
       znargs = 0;
 
       decode_var(BYTE(pc++));
-
-      op_call(TWO, opcode & 0x1f);
     }
 
     /* Double variable VAR */
@@ -405,8 +407,6 @@ void process_instructions(void)
       types2 = BYTE(pc++);
       decode_var(types1);
       decode_var(types2);
-
-      op_call(VAR, opcode & 0x1f);
     }
 
     /* variable VAR */
@@ -417,8 +417,8 @@ void process_instructions(void)
       read_pc = pc - 1;
 
       decode_var(BYTE(pc++));
-
-      op_call(VAR, opcode & 0x1f);
     }
+
+    op_call(opcode);
   }
 }

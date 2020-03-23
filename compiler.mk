@@ -3,7 +3,7 @@ CFLAGS+=	-Wall -Wshadow -std=c99 -pedantic
 endif
 
 ifeq ($(CC), clang)
-CFLAGS+=	-Wall -std=c99 -pedantic
+CFLAGS+=	-Wall -std=c99 -pedantic -Wunused-macros
 endif
 
 ifeq ($(CC), icc)

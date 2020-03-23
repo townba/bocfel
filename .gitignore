@@ -6,3 +6,11 @@ gen
 gargoyle
 cheapglk*
 glktermw*
+
+*.z?
+*.blb
+*.blorb
+*.?blorb
+*.glksave
+*.inf
+*.sav

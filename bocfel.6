@@ -7,7 +7,7 @@
 .Aq http://bocfel.googlecode.com/
 .Sh SYNOPSIS
 .Nm
-.Op Fl cCdDefgGklLmrstUxXyY
+.Op Fl cCdDefgGhklLmrstUxXyY
 .Op Fl a Ar eval_stack_size
 .Op Fl A Ar call_stack_size
 .Op Fl E Ar escape_string
@@ -135,6 +135,8 @@ both with and without this option, paying attention to the map
 connections.  See also the
 .Sx CHARACTER GRAPHICS FONT
 section below.
+.It Fl h
+Display a short help message then exit.
 .It Fl i
 Print out the ID of the specified game and exit. This ID is used to
 uniquely identify a game and is adapted from the Treaty of Babel
@@ -329,12 +331,12 @@ compression they take up over 40000 bytes.
 Display version information and show which compile\-time options are
 set.
 .It Fl x
-Most games include abbreviations for commonly\-used commands: x for
-EXAMINE, g for AGAIN, and z for WAIT. Some early Infocom games, however,
-do not provide these. By default, x, g, and z are mapped to their
-respective commands regardless of whether the game provides them. In the
-unlikely event that a game requires one of these letters for its own
-use, apart from an abbreviation, these abbreviations can be turned off
+Many games include abbreviations for commonly\-used commands: x for
+EXAMINE, g for AGAIN, z for WAIT, and o for OOPS. Some early Infocom
+games, however, do not provide these.  For these Infocom games, x, g, z,
+and o are mapped to their respective commands, providing convenient
+shortcuts for games that don't provide them.  If a game requires one of
+these letters for its own use, these abbreviations can be turned off
 with
 .Fl x .
 .It Fl X
@@ -647,6 +649,10 @@ supplied, the description passed to
 The last-listed state, which is marked with an asterisk, is the default
 state which will be restored with
 .Sy /pop .
+.It Sy /status
+Display the status line.  This only works for V1, V2, and V3 games, and
+is meant to be used either in non-Glk mode, or if the Glk
+implementation being used does not support windows (e.g.\& cheapglk).
 .It Sy /disable
 Disable meta commands for the remainder of the session.  This is useful
 if the game itself expects input to start with a slash character.
@@ -655,6 +661,9 @@ Pretend like [command] was typed.  As with
 .Sy /disable ,
 this is meant for games which expect input to start with a slash
 character.
+.It Sy /debug [...]
+Perform a debugging operation; see
+.Sx META DEBUG COMMANDS .
 .El
 .Pp
 Please note that
@@ -680,6 +689,59 @@ turn
 .Sy /pop
 was called.  This is because meta commands are not considered game
 commands and thus do not cause undo states to be stored.
+.Sh META DEBUG COMMANDS
+The
+.Sy /debug
+command starts a debugging operation.  These are as follows:
+.Bl -tag -offset indent -width "/scriptoff"
+.It Sy change start
+Begin a
+.Dq change
+operation.  This tracks word-sized memory addresses, allowing you to see
+if the values at any addresses have increased or decreased since the
+last check.  This is primarily useful for cheating (see
+.Sx CHEATING ) ,
+helping, for example, to determine which memory address is used to
+track hunger or thirst.
+.It Sy change dec
+Display a list of all memory addresses which have decreased since the
+last change operation (either a
+.Sy change start ,
+.Sy change inc ,
+or
+.Sy change dec .
+Values are treated as signed words, so a change from 0 to 65535 is
+considered a decrease from 0 to -1.
+.It Sy change inc
+Display a list of all memory addresses which have decreased since the
+last change operation.
+.It Sy scan start
+Begin a
+.Dq scan
+operation.  This tracks word-sized memory addresses, checking if
+particular addresses have specific values over time.  As with
+.Dq change
+operations, this is useful mainly for cheating.  An example would be
+tracking which memory address holds the amount of money being carried.
+If you have $50, you can scan all addresses for the value 50.  After
+spending $5, scan all addresses for 45.  Repeat until only one address
+matches and that is likely where the money count is being stored.
+.It Sy scan N
+Scan all memory addresses for the value
+.Dq N ,
+which is a signed decimal integer (hexadecimal if a leading 0x is used).
+The total number of matching addresses (constrained by previous
+.Sy scan
+operations) is then printed.
+.It Sy scan show
+Display all addresses matching all previous
+.Sy scan
+criteria.  This is a separate operation because initial scans will
+potentially match thousands of addresses.
+.It Sy print N
+Print the word (as both signed decimal and unsigned hexadecimal) at
+address N, which is a hexadecimal value.
+.El
 .Sh SOUND EFFECTS
 Currently, sound effects are only available when Gargoyle is used as the
 Glk implementation.  The sound effects should be bundled in a Blorb

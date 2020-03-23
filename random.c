@@ -24,6 +24,7 @@
 
 #include "random.h"
 #include "process.h"
+#include "util.h"
 #include "zterp.h"
 
 /* Mersenne Twister. */
@@ -136,7 +137,7 @@ void seed_random(long value)
 
 void zrandom(void)
 {
-  long v = (int16_t)zargs[0];
+  long v = as_signed(zargs[0]);
 
   if(v <= 0)
   {

@@ -398,7 +398,7 @@ void do_return(uint16_t retval)
   else if(where == 0xff + 2)
   {
     PUSH_STACK(retval);
-    break_from(interrupt_level());
+    interrupt_return();
   }
 }
 
@@ -681,12 +681,15 @@ int pop_save(enum save_type type, long i)
 {
   struct save_stack *s = &save_stacks[type];
   struct save_state *p;
+  uint16_t flags2;
 
   /* If the user requests an index one beyond the size of the stack,
    * trim_saves() will remove all saves, so make sure that does not
    * happen.
    */
   if(i >= s->count) return 0;
+
+  flags2 = WORD(0x10);
 
   trim_saves(type, i);
 
@@ -714,6 +717,17 @@ int pop_save(enum save_type type, long i)
   memcpy(BASE_OF_FRAMES, p->frames, sizeof *p->frames * p->nframes);
 
   trim_saves(type, 1);
+
+  /* §6.1.2.2: As with @restore, header values marked with Rst (in
+   * §11) should be reset.  Unlike with @restore, it can be assumed
+   * that the game was saved by the same interpreter, but it cannot be
+   * assumed that the screen size is the same as it was at the time
+   * @save_undo was called.
+   */
+  write_header();
+
+  /* §6.1.2: Flags 2 should be preserved. */
+  STORE_WORD(0x10, flags2);
 
   return 2;
 }
@@ -757,7 +771,7 @@ void list_saves(enum save_type type, void (*printer)(const char *))
 
 void zsave_undo(void)
 {
-  if(interrupt_level() != 0) die("@save_undo called inside of an interrupt");
+  if(in_interrupt()) die("@save_undo called inside of an interrupt");
 
   /* If override undo is set, all calls to @save_undo are reported as
    * failure; the interpreter still reports that @save_undo is
@@ -785,8 +799,6 @@ void zsave_undo(void)
 
 void zrestore_undo(void)
 {
-  uint16_t flags2;
-
   /* If @save_undo has not been called, @restore_undo should fail, even
    * if there are interpreter-generated save states available.
    */
@@ -796,10 +808,11 @@ void zrestore_undo(void)
   }
   else
   {
-    /* §6.1.2: Flags 2 should be preserved. */
-    flags2 = WORD(0x10);
-    store(pop_save(SAVE_GAME, 0));
-    STORE_WORD(0x10, flags2);
+    int success = pop_save(SAVE_GAME, 0);
+
+    store(success);
+
+    if(success != 0) interrupt_reset();
   }
 }
 
@@ -1031,11 +1044,28 @@ int restore_quetzal(zterp_io *savefile, int is_meta)
 
   if(zterp_iff_find(iff, "CMem", &size))
   {
-    uint8_t buf[size]; /* Too big for the stack? */
+    uint8_t *buf;
 
-    if(zterp_io_read(savefile, buf, size) != size) goto_err("unexpected eof reading compressed memory");
+    /* Dynamic memory is 64KB, and a worst-case save should take up
+     * 1.5× that value, or 96KB.  Simply double the 64KB to avoid
+     * potential edge-case problems.
+     */
+    if(size > 131072) goto_err("reported CMem size too large (%lu bytes)", (unsigned long)size);
+    buf = malloc(size * sizeof *buf);
 
-    if(uncompress_memory(buf, size) == -1) goto_death("memory cannot be uncompressed");
+    if(zterp_io_read(savefile, buf, size) != size)
+    {
+      free(buf);
+      goto_err("unexpected eof reading compressed memory");
+    }
+
+    if(uncompress_memory(buf, size) == -1)
+    {
+      free(buf);
+      goto_death("memory cannot be uncompressed");
+    }
+
+    free(buf);
   }
   else if(zterp_iff_find(iff, "UMem", &size))
   {
@@ -1147,7 +1177,7 @@ int do_save(int is_meta)
  */
 void zsave(void)
 {
-  if(interrupt_level() != 0) die("@save called inside of an interrupt");
+  if(in_interrupt()) die("@save called inside of an interrupt");
 
   int success = do_save(0);
 
@@ -1187,9 +1217,9 @@ int do_restore(int is_meta)
     /* §8.6.1.3 */
     if(zversion == 3) close_upper_window();
 
-    /* The save might be from a different interpreter with different
-     * capabilities, so update the header to indicate what the current
-     * capabilities are...
+    /* §6.1.2.2: The save might be from a different interpreter with
+     * different capabilities, so update the header to indicate what the
+     * current capabilities are...
      */
     write_header();
 
@@ -1214,5 +1244,5 @@ void zrestore(void)
    * @save cannot be called inside an interrupt), so reset the level
    * back to zero.
    */
-  if(success) reset_level();
+  if(success) interrupt_reset();
 }

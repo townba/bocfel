@@ -86,9 +86,9 @@ void zcopy_table(void)
   {
     for(uint16_t i = 0; i < size; i++) user_store_byte(first + i, 0);
   }
-  else if( (first > second) || (int16_t)size < 0 )
+  else if( (first > second) || as_signed(size) < 0 )
   {
-    long n = labs((int16_t)size);
+    long n = labs(as_signed(size));
     for(long i = 0; i < n; i++) user_store_byte(second + i, user_byte(first + i));
   }
   else
