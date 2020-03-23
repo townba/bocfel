@@ -1,3 +1,6 @@
+1.0.1
+• Ensure null termination of a string.
+
 1.0
 • Add the ability to patch known bugs in games at runtime.
 • The username can now be set.
