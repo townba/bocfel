@@ -14,3 +14,7 @@ else ifeq ($(CC), opencc)
 CFLAGS+=	-Wall -std=c99
 
 endif
+
+ifneq ($(CCHOST),)
+CC:=	$(CCHOST)-$(CC)
+endif

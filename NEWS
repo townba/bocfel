@@ -1,3 +1,9 @@
+0.6.0
+• The configuration options script_on and script_name have been renamed to
+  record_on and record_name.
+• Support for some meta commands (/undo, /replay, etc.) has been added.
+• Assorted minor bugfixes and features.
+
 0.5.5
 • Preliminary @sound_effect support.
 • Small bugfixes and general cleanup.

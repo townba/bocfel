@@ -1,20 +1,20 @@
 # DO NOT DELETE
 
 blorb.o: blorb.h io.h iff.h
-branch.o: branch.h memory.h util.h zterp.h process.h stack.h
+branch.o: branch.h memory.h util.h zterp.h process.h stack.h io.h
 dict.o: dict.h memory.h util.h zterp.h process.h unicode.h
 iff.o: iff.h io.h
 io.o: io.h osdep.h unicode.h
-math.o: math.h branch.h process.h stack.h util.h zterp.h
+math.o: math.h branch.h process.h stack.h io.h util.h zterp.h
 memory.o: memory.h util.h zterp.h screen.h
 objects.o: objects.h branch.h memory.h util.h zterp.h process.h screen.h
 osdep.o: osdep.h screen.h
 process.o: process.h branch.h dict.h math.h memory.h util.h zterp.h objects.h
-process.o: random.h screen.h stack.h table.h zoom.h
+process.o: random.h screen.h stack.h io.h table.h zoom.h
 random.o: random.h process.h zterp.h
 screen.o: screen.h branch.h dict.h io.h memory.h util.h zterp.h objects.h
 screen.o: osdep.h process.h stack.h unicode.h
-stack.o: stack.h branch.h iff.h io.h memory.h util.h zterp.h process.h
+stack.o: stack.h io.h branch.h iff.h memory.h util.h zterp.h process.h
 stack.o: screen.h
 table.o: table.h branch.h memory.h util.h zterp.h process.h
 unicode.o: unicode.h memory.h util.h zterp.h
