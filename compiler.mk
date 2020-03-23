@@ -1,13 +1,13 @@
 ifeq ($(CC), gcc)
-CFLAGS+=	-Wall -Wshadow -std=c99 -pedantic
+CFLAGS+=	-Wall -Wshadow -Wmissing-prototypes -std=c99 -pedantic
 endif
 
 ifeq ($(CC), clang)
-CFLAGS+=	-Wall -std=c99 -pedantic -Wunused-macros
+CFLAGS+=	-Wall -Wunused-macros -Wmissing-prototypes -std=c99 -pedantic
 endif
 
 ifeq ($(CC), icc)
-CFLAGS+=	-w2 -wd2259,2557,869,981 -std=c99
+CFLAGS+=	-w2 -ww1793 -wd2259,2557,869,981 -std=c99
 endif
 
 ifeq ($(CC), suncc)
@@ -19,10 +19,10 @@ CFLAGS+=	-Wall -std=c99
 endif
 
 ifeq ($(CC), cparser)
-CFLAGS+=	-Wno-attribute -std=c99 --strict
+CFLAGS+=	-Wno-experimental -std=c99
 endif
 
-ifeq ($(CC), ccc-analyzer)
+ifeq ($(shell basename $(CC)), ccc-analyzer)
 CFLAGS+=	-std=c99
 endif
 

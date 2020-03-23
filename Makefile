@@ -11,6 +11,7 @@ ifdef FAST
   PLATFORM=
   NO_SAFETY_CHECKS=1
   NO_CHEAT=1
+  NO_WATCHPOINTS=1
 endif
 
 ifdef GLK
@@ -43,6 +44,10 @@ endif
 
 ifdef NO_CHEAT
   MACROS+=	-DZTERP_NO_CHEAT
+endif
+
+ifdef NO_WATCHPOINTS
+  MACROS+=	-DZTERP_NO_WATCHPOINTS
 endif
 
 ifdef TANDY

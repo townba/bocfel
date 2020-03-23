@@ -11,7 +11,7 @@ CC=		gcc
 # -O3 -flto -fomit-frame-pointer
 # -flto works only on gcc 4.5 and newer, and selects link-time optimization.
 #
-OPT=		-O
+OPT=		-O2
 
 # Select the target platform.  Valid values are:
 # • unix (for POSIX systems)
@@ -65,6 +65,12 @@ GLK=		gargoyle
 # access.  If the following variable is defined (with any value), cheating will
 # be disabled.
 # NO_CHEAT=		1
+
+# Debugging watchpoints are available, which means that values in the Z-machine
+# can be watched for change, and reported on when such changes occur.  This
+# slows down memory access, so can be disabled.  If the following variable is
+# defined (with any value), watchpoints will be disabled.
+# NO_WATCHPOINTS=	1
 
 # Tandy censored Infocom games.  This was accomplished by Tandy interpreters
 # setting a special flag to indicate to the game that it should cow to pressure

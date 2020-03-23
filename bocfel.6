@@ -1,13 +1,13 @@
-.Dd December 1, 2012
+.Dd June 24, 2015
 .Dt BOCFEL 6
 .Os
 .Sh NAME
 .Nm bocfel
 .Nd Z\-machine interpreter
-.Aq http://bocfel.googlecode.com/
+.Aq Lk http://bocfel.org/
 .Sh SYNOPSIS
 .Nm
-.Op Fl cCdDefgGhklLmrstUxXyY
+.Op Fl cCdDefgGhkmrstUxXyY
 .Op Fl a Ar eval_stack_size
 .Op Fl A Ar call_stack_size
 .Op Fl E Ar escape_string
@@ -160,15 +160,6 @@ also claims the up arrow, which means that history browsing, in Glk
 implementations that support it, might not be able to be initiated with
 the up arrow.  This option disables the use of terminating keys.  Note
 that not all Glk implementations support terminating keys.
-.It Fl l
-When writing out transcripts, a character set must be chosen. By
-default, UTF\-8 is used on Unix systems, and Latin\-1 everywhere else.
-If Glk is not being used, the same character set is used for screen
-output as well. This option disables UTF\-8 and forces Latin\-1.
-.It Fl L
-Force UTF\-8. This is the opposite of the
-.Fl l
-option above.
 .It Fl m
 Disable meta commands.  See
 .Sx META COMMANDS
@@ -245,6 +236,8 @@ record (typically through the REPLAY verb in Inform\-based games, and
 playback before you have an opportunity to call REPLAY, or if the game
 provides no way to play back such a record.
 .Pp
+Command records must be UTF-8.
+.Pp
 See also the
 .Sx META COMMANDS
 section.
@@ -262,6 +255,8 @@ and #reco in some Infocom games), but this option is useful to start
 recording before you have an opportunity to call RECORDING, or if the
 game provides no way to start such a record.
 .Pp
+Command records are always written in UTF-8.
+.Pp
 See also the
 .Sx META COMMANDS
 section.
@@ -273,6 +268,8 @@ Turn on transcripting. This records both the output of the game and user
 input. If the chosen transcript file exists, it will be appended to, not
 overwritten. This way you can easily continue a transcript every time
 you come back to a game.
+.Pp
+Transcripts are always written in UTF-8.
 .Pp
 See also the
 .Fl y
@@ -436,10 +433,6 @@ enable_alt_graphics (b)
 .It
 disable_term_keys (b)
 .It
-disable_utf8 (b)
-.It
-force_utf8 (b)
-.It
 disable_meta_commands (b)
 .It
 max_saves (n)
@@ -480,7 +473,7 @@ boolean (1 is true, 0 is false), c is a character, n is a number, and s
 is a string.  These all correspond to possible command\-line arguments.
 .Pp
 In addition to analogs to the command\-line arguments, there are a
-couple of options that can be set only through the configuration file.
+couple of other options that can be set through the configuration file.
 One is
 .Dq cheat :
 see the
@@ -641,6 +634,18 @@ one of the slot numbers shown by
 .Sy /ls .
 The specified save, as well as any newer saves, will be removed from the
 stack.
+.It Sy /drop
+Drop the last-stored in-memory save state, as created by
+.Sy /ps ,
+removing it from the stack.
+.It Sy /drop [slot]
+Drop the specified in-memory save slot.  [slot] must correspond to one
+of the slot numbers shown by
+.Sy /ls .
+The specified save, as well as any newer saves, will be removed from the
+stack.
+.It Sy /drop all
+Drop all in-memory save slots, removing them from the stack.
 .It Sy /ls
 List all available in-memory save states.  Each state is shown either as
 a string representing the time when the state was saved, or, if it was
@@ -692,7 +697,19 @@ commands and thus do not cause undo states to be stored.
 .Sh META DEBUG COMMANDS
 The
 .Sy /debug
-command starts a debugging operation.  These are as follows:
+command starts a debugging operation.  For some debugging operations, an
+.Em extended address
+is expected.  This is either an absolute address, specified in
+hexadecimal with an optional lading
+.Sy 0x ,
+or it is a global variable.  Global variables have the syntax
+.Sy Gxx ,
+where
+.Sy xx
+is a hexadecimal value in the range [00, ef], corresponding to global
+variables 0 to 239.
+.Pp
+The debug commands are as follows:
 .Bl -tag -offset indent -width "/scriptoff"
 .It Sy change start
 Begin a
@@ -726,11 +743,12 @@ tracking which memory address holds the amount of money being carried.
 If you have $50, you can scan all addresses for the value 50.  After
 spending $5, scan all addresses for 45.  Repeat until only one address
 matches and that is likely where the money count is being stored.
-.It Sy scan N
+.It Sy scan [N]
 Scan all memory addresses for the value
-.Dq N ,
-which is a signed decimal integer (hexadecimal if a leading 0x is used).
-The total number of matching addresses (constrained by previous
+.Sy N ,
+which is a signed decimal integer (hexadecimal if a leading 0x is used,
+octal if a leading 0 is used).  The total number of matching addresses
+(constrained by previous
 .Sy scan
 operations) is then printed.
 .It Sy scan show
@@ -738,16 +756,62 @@ Display all addresses matching all previous
 .Sy scan
 criteria.  This is a separate operation because initial scans will
 potentially match thousands of addresses.
-.It Sy print N
+.It Sy print [address]
 Print the word (as both signed decimal and unsigned hexadecimal) at
-address N, which is a hexadecimal value.
+.Sy address ,
+which is an extended address.
+.It Sy freeze [address] [value]
+Freeze a 16-bit value in memory; this is analogous to the
+.Sy freeze
+configuration variable (see
+.Sx CHEATING ) .
+.Sy address
+is the address to freeze, and
+.Sy value
+is the value it should be frozen to.
+.Sy address
+is an extended address, and
+.Sy value
+can be decimal, hexadecimal, or octal, with a leading
+.Sy 0x
+signifying hexadecimal and a leading
+.Sy 0
+signifying octal.
+.It Sy unfreeze [address]
+Unfreeze the 16-bit value which is frozen at
+.Sy address ;
+the address is parsed identically as for
+.Sy freeze .
+It is not an error to unfreeze an unfrozen value.
+.It Sy show_freeze
+Display all frozen values.
+.It Sy watch [address]
+Report any changes to the 16-bit word at
+.Sy address ,
+which is an extended address.  Please note that it is possible for
+.Nm
+to be built without watch support, so this command might not work.
+.It Sy watch all
+Watch every address for changes.  This will likely produce a lot of
+output.
+.It Sy unwatch [address]
+Stop watching
+.Sy address
+for changes.  It is not an error to stop watching an address which is
+not being watched.
+.It Sy unwatch all
+Stop watching all addresses which are currently being watched.
+.It Sy show_watch
+Display all watched-for values.
 .El
 .Sh SOUND EFFECTS
 Currently, sound effects are only available when Gargoyle is used as the
 Glk implementation.  The sound effects should be bundled in a Blorb
-file, which must be named as follows: if the story file is
+file.  If the story file itself is stored in a Blorb file, that file is
+used to find the sound effects.  Otherwise, a separate Blorb file must
+exist and be named as follows: if the story file is
 .Pa /foo/bar/sherlock.z5 ,
-then the blorb file must be
+then the Blorb file must be
 .Pa /foo/bar/sherlock.blb .
 Sound effect support is experimental and does not currently conform
 fully to the Z\-machine standard.  Bleeps are not supported, nor is
@@ -762,36 +826,40 @@ is able to freeze certain areas of memory so that they always report the
 same value. The idea behind this is to prevent hunger and thirst
 counters from forcing you to eat and drink.
 .Pp
-Cheating is only available through the configuration file, and is
-treated like any other configuration variable.  The syntax is as
-follows:
-.Pf freezew: Sy address : Ns Sy value .
+Cheating is available through the configuration file as well as through
+meta debug commands (see
+.Sx META DEBUG COMMANDS
+for information on using meta debug commands to cheat).
+.Pp
+When the configuration file is used, cheats are treated like any other
+configuration variable.  The syntax is as follows:
+.Pf freeze: Sy address : Ns Sy value .
 .Pp
 This causes the word (an unsigned 16\-bit value) at address
 .Sy address
 to always contain the value
-.Sy value .
-The address must be specified in hexadecimal, with an optional leading
-0x; the value is interpreted as an integer constant in C: leading 0x
-means hexadecimal, leading 0 means octal, otherwise decimal.
-Alternatively, instead of an actual address for
-.Sy address ,
-a global variable can be specified.  This has the syntax
-.Sy Gxx ,
-where
-.Sy xx
-is a hexadecimal value in the range [0, ef], corresponding to global
-variables 0 to 239.
+.Sy value ;
+.Sy address
+is an extended address while value can be decimal, hexadecimal, or
+octal, with a leading
+.Sy 0x
+signifying hexadecimal and a leading
+.Sy 0
+signifying octal.
 .Pp
 Example:
 .Bd -literal -offset indent
-cheat = freezew:0xabcd:0
-cheat = freezew:G00:0
+cheat = freeze:0xabcd:0
+cheat = freeze:G00:0
 .Ed
 .Pp
-Visit https://code.google.com/p/bocfel/wiki/Cheats for a list of a few
-cheats for some Infocom games.  An explanation of how to figure out
-cheats is beyond the scope of this document.
+Visit
+.Lk http://bocfel.org/cheats/
+for a list of a few cheats for some Infocom games.  More cheats are
+potentially discoverable using meta debug commands (see the
+.Sx META DEBUG COMMANDS
+section).  A more detailed explanation of how to figure out cheats is
+beyond the scope of this document.
 .Pp
 Please note that it is possible for
 .Nm
@@ -799,18 +867,18 @@ to be built without support for cheating, in which case these cheats
 will silently do nothing.  The
 .Fl v
 option can be used to determine whether this is the case.
-.Sh AUTHORS
-.An "Chris Spiegel" Aq cspiegel@gmail.com
 .Sh SEE ALSO
-.Xr frotz 6 ,
-.Xr nitfol 6 ,
+.Xr iconv 1 ,
 .Xr fizmo 6 ,
-.Xr iconv 1
+.Xr frotz 6 ,
+.Xr nitfol 6
 .Sh STANDARDS
 .Nm
 is believed to comply fully with version 1.1 of the
 .Em Z\-machine Standards Document ;
 see
-http://www.inform\-fiction.org/zmachine/standards/z1point0/index.html
+.Lk http://www.inform-fiction.org/zmachine/standards/z1point0/index.html
 and
-http://ifarchive.org/if\-archive/infocom/interpreters/specification/ZSpec11.txt.
+.Lk http://ifarchive.org/if-archive/infocom/interpreters/specification/ZSpec11.txt .
+.Sh AUTHORS
+.An "Chris Spiegel" Aq cspiegel@gmail.com

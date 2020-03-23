@@ -1,3 +1,8 @@
+0.9
+• UTF-8 is now used for all transcripts and command scripts.
+• Watchpoints can now be set through the debugging interface.
+• The upper window now tracks resizes properly even when it is closed.
+
 0.6.3.2
 • Fix detection of Sherlock version 26-880127.
 
