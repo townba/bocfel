@@ -1,3 +1,7 @@
+0.6.1
+• Bocfel is now dual-licensed under both the GPLv2 and GPLv3.
+• Small bugfixes and general cleanup.
+
 0.6.0
 • The configuration options script_on and script_name have been renamed to
   record_on and record_name.

@@ -1,4 +1,4 @@
-.Dd June 26, 2011
+.Dd February 27, 2012
 .Dt BOCFEL 6
 .Os
 .Sh NAME
@@ -123,6 +123,8 @@ Disable the character graphics font. See the
 .Sx CHARACTER GRAPHICS FONT
 section below.
 .It Fl G
+Select an alternative style of box drawing characters.
+.Pp
 Most characters in the graphics font map fairly well to Unicode
 equivalents, but a few box drawing characters do not.  Two methods for
 drawing the missing characters are provided, each with pros and cons.  A
@@ -343,7 +345,7 @@ their ridiculously delicate sensibilities. If you want to laugh at
 Tandy's insecurities, this flag will turn on their censorship. In
 addition to the mangling of
 .Em The Witness ,
-a few other games unnecessarily add mention of Tandy in the output to
+a few other games unnecessarily add mention of Tandy in the output of
 the VERSION command.
 .It Fl y
 When transcripting is turned on and an existing file is selected, that
@@ -607,8 +609,8 @@ then the blorb file must be
 Sound effect support is experimental and does not currently conform
 fully to the Z\-machine standard.  Bleeps are not supported, nor is
 section 9.4.4, nor is the hack regarding
-.Em The Lurking Horror mentioned
-in the Remarks section.
+.Em The Lurking Horror
+mentioned in the Remarks section.
 .Sh CHEATING
 There is extremely rudimentary support for
 .Dq cheating .
@@ -657,7 +659,7 @@ a global variable can be specified.  This has the syntax
 .Sy Gxx ,
 where
 .Sy xx
-is a hexadecimal value in the range [0, 239], corresponding to global
+is a hexadecimal value in the range [0, ef], corresponding to global
 variables 0 to 239.
 .Pp
 An explanation of how to figure out cheats is beyond the scope of this
