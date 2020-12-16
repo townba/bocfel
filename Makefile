@@ -1,10 +1,10 @@
 SRCS=	blorb.c branch.c dict.c iff.c io.c math.c meta.c memory.c objects.c osdep.c patches.c process.c random.c screen.c sound.c stack.c unicode.c util.c zoom.c zterp.c
 OBJS=	$(SRCS:%.c=%.o)
 
+CFLAGS=	-g
+
 include config.mk
 include compiler.mk
-
-CFLAGS+=	-g
 
 ifdef FAST
   GLK=
@@ -21,10 +21,23 @@ ifdef GLK
 
   include $(GLK)/Make.$(GLK)
   LDADD+=	-L$(GLK) $(GLKLIB) $(LINKLIBS)
-endif
 
-ifdef GLK_TICK
-  MACROS+=	-DZTERP_GLK_TICK
+  # Windows Glk actually does something inside of glk_tick(), so force
+  # it here. There is a slight inconsistency: if you don’t want
+  # glk_tick() called on Win32, you must pass “GLK_TICK=” when building,
+  # whereas for all other platforms, this is unneccessary, since it’s
+  # only on Win32 that a value is explicitly set for GLK_TICK.
+  ifeq ($(PLATFORM), win32)
+    GLK_TICK=1
+  endif
+
+  ifdef GLK_TICK
+    MACROS+=	-DZTERP_GLK_TICK
+  endif
+
+  ifndef GLK_NO_BLORB
+    MACROS+=	-DZTERP_GLK_BLORB
+  endif
 endif
 
 ifeq ($(PLATFORM), unix)
@@ -57,7 +70,12 @@ endif
 all: bocfel
 
 %.o: %.c
-	$(CC) $(OPT) $(CFLAGS) $(MACROS) -c $<
+ifdef V
+	$(CC) $(OPT) $(CFLAGS) $(COMPILER_FLAGS) $(MACROS) -c $<
+else
+	@echo $(CC) $(OPT) $(CFLAGS) $(MACROS) -c $<
+	@$(CC) $(OPT) $(CFLAGS) $(COMPILER_FLAGS) $(MACROS) -c $<
+endif
 
 bocfel: $(OBJS)
 	$(CC) $(OPT) -o $@ $^ $(LDADD)
@@ -78,6 +96,6 @@ tags: $(SRCS)
 	ctags -I ZASSERT --c-kinds=+l $^ *.h
 
 bocfel.html: bocfel.6
-	mandoc -Thtml -Ostyle=mandoc.css -Ios= $< > $@
+	mandoc -Thtml -Ostyle=mandoc.css,toc -Ios= $< > $@
 
 include deps

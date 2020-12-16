@@ -332,17 +332,6 @@ section for more information.
 .Pp
 The default value is 100. A value of zero disables undo, and a negative
 value provides unlimited undo. This is probably a bad idea.
-.It Fl U
-One of the ways that undo slots (see
-.Fl u )
-save memory is to use compression. On modern machines the compression
-time is minuscule and not noticeable. On slower systems, however, it is
-possible that the compression will be noticeable. This option disables
-compression, but be aware that without compression, the size really
-balloons: save slots in
-.Em Anchorhead ,
-with compression, take up about 900 bytes on game startup.  Without
-compression they take up over 40000 bytes.
 .It Fl v
 Display version information and show which compile\-time options are
 set.
@@ -457,8 +446,6 @@ username (s)
 disable_meta_commands (b)
 .It
 max_saves (n)
-.It
-disable_undo_compression (b)
 .It
 int_number (n)
 .It

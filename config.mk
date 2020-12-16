@@ -47,6 +47,13 @@ GLK=		gargoyle
 #
 # GLK_TICK=		1
 
+# While it’s not required, most Glk libraries include support for Blorb
+# files as described by the Glk spec. Bocfel assumes that if Glk is
+# being used, the Blorb functions are available. If they’re not, this
+# setting will instruct Bocfel to not make use of them.
+#
+# GLK_NO_BLORB=		1
+
 # By default, many safety checks are performed, such as verifying that a story
 # is not overflowing its stack, performing invalid memory accesses, and so on.
 # If this variable is defined (with any value), these checks are not performed.

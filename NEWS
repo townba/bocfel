@@ -1,3 +1,10 @@
+1.1
+• Support Blorb multimedia resources in non-Gargoyle Glk implementations.
+• Fix two potential crashes discovered by American Fuzzy Lop.
+• Improved terminal (non-Glk) support: Windows can now do colors and styles, and
+  Unix now supports true color on terminals capable of it.
+• Fix preloaded input in Beyond Zork.
+
 1.0.1
 • Ensure null termination of a string.
 
