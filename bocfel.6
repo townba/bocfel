@@ -1,4 +1,4 @@
-.Dd July 24, 2018
+.Dd January 14, 2021
 .Dt BOCFEL 6
 .Os
 .Sh NAME
@@ -138,6 +138,14 @@ connections.  See also the
 section below.
 .It Fl h
 Display a short help message then exit.
+.It Fl H
+Disable save history playback. When saving,
+.Nm
+includes a snapshot of the screen state (more or less) in order to play
+it back on restore to provide context as to what was happening before
+the game was saved. This flag disables playback of history. Note that
+history will still be stored on save even when this option is selected;
+it just won't be played back on restore.
 .It Fl i
 Print out the ID of the specified game and exit. This ID is used to
 uniquely identify a game and is adapted from the Treaty of Babel
@@ -438,6 +446,8 @@ assume_fixed (b)
 disable_graphics_font (b)
 .It
 enable_alt_graphics (b)
+.It
+disable_history_playback (b)
 .It
 disable_term_keys (b)
 .It

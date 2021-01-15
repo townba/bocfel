@@ -1,3 +1,10 @@
+1.2
+• Rework meta saves to fix corner-case issues and improve screen management.
+• Add history playback to save files to provide context on restore.
+• Update @set_font handling to be in line with the latest standard revision.
+• Several small fixes and updates (including but not limited to fixes for issues
+  384, 385, 395, and 399 at https://github.com/garglk/garglk/issues/).
+
 1.1
 • Support Blorb multimedia resources in non-Gargoyle Glk implementations.
 • Fix two potential crashes discovered by American Fuzzy Lop.
