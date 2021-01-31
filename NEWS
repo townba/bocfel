@@ -1,3 +1,6 @@
+1.2.1
+• Various small bug fixes.
+
 1.2
 • Rework meta saves to fix corner-case issues and improve screen management.
 • Add history playback to save files to provide context on restore.
