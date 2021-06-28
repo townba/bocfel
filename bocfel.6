@@ -7,7 +7,7 @@
 .Aq Lk http://bocfel.org/
 .Sh SYNOPSIS
 .Nm
-.Op Fl cCdDefgGhkmprstUxXyY
+.Op Fl cCdDefFgGhHkmprstxXyY
 .Op Fl a Ar eval_stack_size
 .Op Fl A Ar call_stack_size
 .Op Fl E Ar escape_string
@@ -64,11 +64,9 @@ If the Glk implementation being used is Gargoyle, or if Glk is not being
 used at all, support for colors is provided.  This option disables color
 support entirely.
 .It Fl C
-Do not read the configuration file
-.Pa $HOME/.bocfelrc .
-Settings in the configuration file take precedence over those specified
-on the command line, so if you want to override the configuration file,
-use this option.
+Do not read the configuration file. Settings in the configuration file
+take precedence over those specified on the command line, so if you want
+to override the configuration file, use this option.
 .It Fl d
 Many Glk implementations allow timed input as used by games such as
 .Em Border Zone .
@@ -380,15 +378,22 @@ must be used instead of the game's UNDO command.
 .It Fl z Ar seed
 Provide a seed to the pseudo\-random number generator, causing it to
 yield predictable values. This option is probably only of use to game
-authors who are doing testing.
-.It Fl Z Ar device
-Provide a device from which a seed for the pseudo\-random number
-generator is read.  This is meant to be used with special files such as
-.Pa /dev/urandom ,
-although it can be used with any file from which at
-least 32 bits can be read.  The
-.Fl z
+authors who are doing testing. The generator will be reseeded with this
+value whenever the @random opcode is called with a 0 operand or when the
+@restart opcode is called. The
+.Fl Z
 option overrides this option.
+.It Fl Z Ar device
+Provide a device from which random numbers are read for the @random
+opcode. This is meant to be used with special files such as
+.Pa /dev/urandom ,
+although it can be used with any file. If a read error occurs or
+end-of-file is reached,
+.Nm
+will switch to using a pseudo\-random number generator. If the game is
+put into predictable mode via a negative operand to @random, a
+pseudo\-random number generator will be used until the game switchs back
+to random mode.
 .El
 .Sh CONFIGURATION FILE
 .Nm
@@ -397,9 +402,14 @@ obviates the need to provide command\-line arguments each time you start
 a game, as well as allowing customization based on which game is being
 played.
 .Pp
-The configuration file is located in
-.Pa $HOME/.bocfelrc ,
-and a general outline is as follows:
+On Unix, the configuration file is located at
+.Pa $XDG_CONFIG_HOME/bocfel/bocfelrc .
+For legacy reasons, if the file
+.Pa $HOME/.bocfelrc
+exists, it will be used instead. On Windows, the configuration file is
+located at
+.Pa %APPDATA%\eBocfel\ebocfel.ini .
+An outline of the config file is as follows:
 .Bd -literal -offset indent
 enable_escape = 1
 disable_color = 1
@@ -493,13 +503,43 @@ boolean (1 is true, 0 is false), c is a character, n is a number, and s
 is a string.  These all correspond to possible command\-line arguments.
 .Pp
 In addition to analogs to the command\-line arguments, there are a
-couple of other options that can be set through the configuration file.
+few other options that can be set through the configuration file.
 One is
 .Dq cheat :
 see the
 .Sx CHEATING
-section below.  The other is fine\-grained control over colors in
-Gargoyle; this does not apply to any other build types.
+section below.
+.Pp
+Another is autosaving. When autosaving is enabled,
+.Nm
+will perform a save each time input is read, silently storing the save
+file to a persistent location on disk. On startup, if that file exists
+and is a valid save file, it will be loaded. This allows players to
+continue from where they left off without needing to explicitly save. If
+the user explicitly quits the game (usually via the QUIT command, but in
+fact any time the @quit opcode is called), the autosave file will be
+removed, allowing the game to start from the beginning next time.
+.Pp
+Autosaving is not perfect: history is saved and replayed, but only in
+the lower window. The contents of the upper window, if it is being used,
+are not saved. That means that if the upper window is in use, it will
+likely look incorrect after autorestore, because the game will not know
+it needs to redraw it. This might be something that's quickly corrected
+by the game (e.g.\& if it redraws the upper window each turn), but it
+might not be.
+.Pp
+To enable this feature, set the
+.Dq autosave
+option, in the configuration file, to true (1). By default, autosaving
+is disabled. At the moment, this feature is available only on Unix and
+Windows. The location of autosave directory is
+.Pa $XDG_DATA_HOME/bocfel/autosave
+on Unix and
+.Pa %APPDATA%\ebocfel\eautosave
+on Windows.
+.Pp
+The final configuration-file-only option is fine\-grained control over
+colors in Gargoyle; this does not apply to any other build types.
 .Pp
 At the most basic, there are 8 colors that the Z\-machine can use,
 corresponding to ANSI colors: black, red, green, yellow, blue, magenta,
@@ -836,11 +876,8 @@ exist and be named as follows: if the story file is
 .Pa /foo/bar/sherlock.z5 ,
 then the Blorb file must be
 .Pa /foo/bar/sherlock.blb .
-Sound effect support is experimental and does not currently conform
-fully to the Z\-machine standard.  Bleeps are not supported, nor is
-section 9.4.4, nor is the hack regarding
-.Em The Lurking Horror
-mentioned in the Remarks section.
+.Pp
+Bleeps (sound effects 1 and 2) are not supported.
 .Sh CHEATING
 There is extremely rudimentary support for
 .Dq cheating .

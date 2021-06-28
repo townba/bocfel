@@ -1,5 +1,5 @@
 # Select the compiler to be used.  See compiler.mk for supported compilers.
-# Even if your compiler is not officially supported, it might still work; C99
+# Even if your compiler is not officially supported, it might still work; C11
 # support is required, however.
 CC=		gcc
 
@@ -16,8 +16,9 @@ OPT=		-O2
 # Select the target platform.  Valid values are:
 # • unix (for POSIX systems)
 # • win32 (for Win32 systems)
+# • dos (for DOS systems)
 #
-# Any other value (or none at all) will result in the use of standard C99
+# Any other value (or none at all) will result in the use of standard C11
 # functions only.
 #
 PLATFORM=	unix

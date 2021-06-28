@@ -1,3 +1,22 @@
+1.3.2
+• Support queued sound effects as described in §9 of The Z-Machine Standards
+  Document 1.1.
+
+1.3.1
+• Fix two sound bugs: fading in Sherlock works better now, and The Lurking
+  Horror no longer crashes when playing some sounds.
+• Add support for repeating sounds in The Lurking Horror.
+
+1.3
+• Add experimental autosave (disabled by default): Bocfel can now pick up where
+  it left off after a previous shutdown.
+• Add mouse support.
+• Add support for the “routine” operand to @sound_effect.
+• Add support for DOS (32-bit only at the moment).
+• The XDG Base Directory Specification is now honored on Unix systems.
+• Add more patches for Beyond Zork to improve its behavior if the interpreter is
+  DOS or Apple II.
+
 1.2.1
 • Various small bug fixes.
 

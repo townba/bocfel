@@ -1,29 +1,29 @@
 ifeq ($(CC), gcc)
-COMPILER_FLAGS=	-Wall -Wshadow -Wmissing-prototypes -std=c99 -pedantic
+COMPILER_FLAGS=	-Wall -Wshadow -Wmissing-prototypes -std=c11 -pedantic
 endif
 
 ifeq ($(CC), clang)
-COMPILER_FLAGS=	-Wall -Wunused-macros -Wmissing-prototypes -Wno-tautological-constant-out-of-range-compare -std=c99 -pedantic
+COMPILER_FLAGS=	-Wall -Wunused-macros -Wmissing-prototypes -Wno-tautological-constant-out-of-range-compare -std=c11 -pedantic
 endif
 
 ifeq ($(CC), icc)
-COMPILER_FLAGS=	-w2 -ww1793 -wd2259,2557,869,981 -std=c99
+COMPILER_FLAGS=	-Wall -std=c11
 endif
 
 ifeq ($(CC), suncc)
-COMPILER_FLAGS=	-xc99=all -Xc -v
+COMPILER_FLAGS=	-std=c11 -pedantic
 endif
 
-ifeq ($(CC), opencc)
-COMPILER_FLAGS=	-Wall -std=c99
+ifeq ($(CC), tcc)
+COMPILER_FLAGS=	-std=c11
 endif
 
 ifeq ($(CC), cparser)
-COMPILER_FLAGS=	-Wno-experimental -std=c99
+COMPILER_FLAGS=	-Wno-experimental -Wno-unused-parameter -std=c11
 endif
 
 ifeq ($(shell basename $(CC)), ccc-analyzer)
-COMPILER_FLAGS=	-std=c99
+COMPILER_FLAGS=	-std=c11
 endif
 
 ifneq ($(CCHOST),)

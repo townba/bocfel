@@ -15,6 +15,12 @@ files are no longer Quetzal files, because they operate slightly
 differently due to the game not handling the save code. Instead of the
 IFF type `IFZS` as in Quetzal, these files are `BFZS`.
 
+Meta save files are also used by the autosave feature, which saves the
+game if the interpreter is shut down (without @quit having been called),
+to be restored upon the next start. Saves created through the autosave
+mechanism are identical to meta saves with one addition: the `Rand`
+chunk.
+
 # History
 
 A `Bfhs` chunk represents part of the state of the screen at the time
@@ -83,27 +89,36 @@ Quetzal such that it is inside the `@save`, to be continued on
 `@restore`. For meta saves, there is no `@save` call, so the program
 counter cannot be there. Instead, the user can request a meta save
 during a `@read` call, and as such, the only place the program counter
-can be stored is at or around that `@read` call. Because the read was
-interrupted to perform the save, the interpreter needs to restart the
-read call on restore. In short, saving and restoring happens entirely
-inside of `@read` which is not something Quetzal can do. Creating the
-new `BFZS` type ensures that other interpreters do not try to load these
-files.
+can be stored is at or around that `@read` call. For `@aread`, this
+means the program counter is at the store variable, and for `@sread` it
+is actually at the following instruction.
 
-In addition, two new chunks are defined to handle extra information
+Because the read was interrupted to perform the save, the interpreter
+needs to restart the read call on restore. In short, saving and
+restoring happens entirely inside of `@read` which is not something
+Quetzal can do. Creating the new `BFZS` type ensures that other
+interpreters do not try to load these files.
+
+Autosaves will also save at `@read_char`, which operates the same as
+saves at `@read`.
+
+In addition, four new chunks are defined to handle extra information
 needed during a meta save.
 
 ## The `Args` Chunk
 
-When `@read` is restarted after a restore, the arguments that were
-originally provided to it (at the time of save) must be restored as
-well: there is no guarantee that the arguments at the current `@read`
-are the same as they were during the save. This chunk stores the
-arguments.
+When `@read` or `@read_char` is restarted after a restore, the arguments
+that were originally provided to it (at the time of save) must be
+restored as well: there is no guarantee that the arguments to the
+current opcode are the same as they were during the save. This chunk
+stores the arguments.
 
-The size of this chunk is the number of arguments multiplied by two,
-followed directly by the arguments, each a 16-bit value. The number of
-arguments can be inferred from the size of the chunk.
+The first part of the chunk is an 8-bit value which specifies the opcode
+type: 0 is `@read`, 1 is `@read_char`.
+
+The second part consists of the arguments to the opcode. Each argument
+is a 16-bit value. The number of arguments can be inferred from the
+chunk size.
 
 ## The `Scrn` Chunk
 
@@ -153,3 +168,40 @@ most of the window properties in §8.8.3.2. This is chiefly because
 Bocfel doesn't really support V6. If V6 support is ever added, the
 `Scrn` chunk will be updated to a new version with better V6 window
 support.
+
+## The `Rand` Chunk
+
+If the random number generator is in predicable mode (i.e. `@random` has
+been called with a negative value), the current state of the PRNG will
+be stored in the `Rand` chunk for autosaves. If the game is in random
+mode, then this chunk is omitted. For non-autosaves, this chunk is
+always omitted. Random state is stored as follows:
+
+* PRNG type (16-bit) - The only supported PRNG type is Xorshift32,
+                       which has a type of 0.
+* PRNG state (described below)
+
+For Xorshift32, the state is a single 32-bit value which represents the
+current Xorshift32 value.
+
+## The `Undo` Chunk
+
+For autosaves, the current state of Undo is stored so that after an
+autorestore, the UNDO command will work. For games which do not support
+undo, the meta command /UNDO will still work.
+
+The chunk size is variable, and consists of:
+
+* Version (32-bit) - This section describes version 0
+* Number of undo states (32-bit)
+* Undo data (described below)
+
+### Undo data
+
+Undo states are stored sequentially, with the oldest first. Save states
+are BFZS data as described by this document.  Each save state consists
+of:
+
+* Save type (8-bit) - 0 for normal undo, 1 for meta
+* Size of the BFZS data (32-bit)
+* The BFZS data itself (variable)

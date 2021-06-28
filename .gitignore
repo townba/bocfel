@@ -1,7 +1,7 @@
 *.o
-zterp
-bocfel
-bocfel.html
+/zterp
+/bocfel
+/bocfel.html
 
 .*.swp
 .ccls-cache
@@ -11,13 +11,13 @@ bocfel.html
 *.kdev4
 compile_commands.json
 
-cheapglk
-glkterm
-glktermw
-nanoglk
-qglk
-remglk
-xglk
+/cheapglk
+/glkterm
+/glktermw
+/nanoglk
+/qglk
+/remglk
+/xglk
 
 *.z?
 *.blb
