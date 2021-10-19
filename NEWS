@@ -1,3 +1,14 @@
+1.4
+• A new “/notes” meta command was added which allows users to add arbitrary
+  notes to game sessions; these notes are included in save files automatically
+  so they are available across game sessions.
+• A new persistent transcripting feature was added: if enabled, a transcript of
+  every game session is automatically created and included in save files, so it
+  is available across game sessions. This can be exported at any time.
+• The status line for Planetfall and Stationfall now properly displays the time.
+• Non-ASCII characters are again accepted in the Software License Application in
+  Bureaucracy.
+
 1.3.2
 • Support queued sound effects as described in §9 of The Z-Machine Standards
   Document 1.1.
@@ -105,7 +116,7 @@
 • The stack is now properly saved in a @save_undo call.
 • Bocfel generates error messages on a few rather questionable uses of the
   Z-machine; some of these instances have been modified to return sensible
-  results instead of aborting.  The praxix and strictz tests are now passed.
+  results instead of aborting. The praxix and strictz tests are now passed.
 
 0.5.0
 • Initial release.

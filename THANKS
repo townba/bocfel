@@ -1,4 +1,4 @@
-Bocfel would not exist today were it not for the work of many others.  I would
+Bocfel would not exist today were it not for the work of many others. I would
 therefore like to thank the following people for their contributions to the
 ongoing development of Z-machine related software.
 
@@ -13,13 +13,13 @@ responsible for the resurgence of the Z-machine.
 Graham Nelson, because listing him once does not adequately convey just how
 instrumental he has been for the Z-machine.
 
-Mark Howell, for Ztools.  I don't think it would have been possible for me to
+Mark Howell, for Ztools. I don't think it would have been possible for me to
 complete Bocfel without txd, the Z-code disassembler.
 
 Andrew Plotkin, for Glk, as well as his tireless efforts on behalf of the
 medium.
 
-Stefan Jokisch, for Frotz.  When I was unclear about particular bits of the
+Stefan Jokisch, for Frotz. When I was unclear about particular bits of the
 Z-machine standard, peeking at Frotz's source code was very helpful.
 
 Tor Andersson, for Gargoyle, whose Glk implementation is my main target (don't

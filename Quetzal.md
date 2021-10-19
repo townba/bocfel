@@ -1,40 +1,34 @@
 # Quetzal Extensions
 
-Bocfel extends Quetzal for two purposes.
-
-The first is to add history to a save file to provide context on
-restore: the state of the screen (lower window only) at the time of save
-is shown on restore. This uses a new IFF chunk type (called `Bfhs`) and
-is completely compatible with other interpreters as they will ignore
-unknown chunks.
-
-The second is to allow meta saves, or interpreter-provided saves. Bocfel
-provides ephemeral saves (using `/ps`) as well as disk-backed saves
-(`/save`) for games which do not support saving. However, these save
-files are no longer Quetzal files, because they operate slightly
-differently due to the game not handling the save code. Instead of the
-IFF type `IFZS` as in Quetzal, these files are `BFZS`.
-
-Meta save files are also used by the autosave feature, which saves the
-game if the interpreter is shut down (without @quit having been called),
-to be restored upon the next start. Saves created through the autosave
-mechanism are identical to meta saves with one addition: the `Rand`
-chunk.
+Bocfel extends Quetzal for several purposes, explained below.
 
 # History
 
+Bocfel adds history to a save file to provide context on restore: the
+state of the screen (lower window only) at the time of save is shown on
+restore. This uses a new IFF chunk type (called `Bfhs`) and is
+completely compatible with other interpreters as they will ignore
+unknown chunks.
+
 A `Bfhs` chunk represents part of the state of the screen at the time
-the story was saved. Up to 2000 history events are stored for playback
-after a restore, with a history event being, roughly, a style or a
+the story was saved. Up to 2000 history entries are stored for playback
+after a restore, with a history entry being, roughly, a style or a
 character. The general format of the chunk is:
 
 * Version (32-bit) - This section describes version 0
-* History entry type (8-bit)
-* History entry data (size depends on type)
+* Number of history entries (32-bit)
+* History entries (described below)
 
-## History entry types
+## History entry
 
-### Style
+A history entry consists of two values:
+
+* Type (8-bit)
+* Data (size depends on type)
+
+### History entry types
+
+#### Style
 
 This is type 0. A style entry switches the text style to the specified
 value. This 8-bit value is exactly equivalent to the Z-machine's styles,
@@ -48,7 +42,7 @@ which have the following values:
 
 These can be combined by adding/bitwise ORing them together.
 
-### Colors
+#### Colors
 
 Foreground color is type 1, background is type 2. Colors are specified
 by two following values. The first is an 8-bit mode and the second a
@@ -64,24 +58,69 @@ range 1-12.
 For true color, the value is a 15-bit true color value as described in
 §8.3.7 of the Z-machine Standards Document 1.1.
 
-### Start of Input
+#### Start of Input
 
 This is type 3, and marks the start of user input. This allows the
 interpreter to style the input appropriately (such as with `style_Input`
 in Glk). There is no associated data, as this is only a marker.
 
-### End of Input
+#### End of Input
 
 This is type 4 and is a complement to the *Start of Input* marker.
 There is no associated data.
 
-### Character
+#### Character
 
 This is type 5 and is a character from the history, either printed by
 the game or entered by the user, but only for the lower window.
 Characters are stored in UTF-8, meaning the size is variable.
 
+# Persistent transcripting
+
+Bocfel provides a persistent transcript, which, if enabled, stores a
+game transcript in memory. This is identical to the transcripts produced
+when the Z-machine's transcripting is turned on. The persistent
+transcript will be written to save files so that transcripting can
+persist across sessions without any user intervention. To do this,
+persistent transcripts are stored in save files in a `Bfts` chunk.
+
+The chunk size is variable, and consists of:
+
+* Version (32-bit) - This section describes version 0
+* The transcript itself (variable)
+
+The transcript is just text encoded in UTF-8. Its size can be inferred
+from the chunk size.
+
+# Note taking
+
+Bocfel allows the user to take notes during a game session. These notes
+are stored in save files using the `Bfnt` chunk. Notes have no imposed
+structure, but are instead simply a collection of arbitrary bytes that
+the user can edit in whatever editor is configured. As such, they are
+stored directly in the save file with no translation of any kind. A user
+could, in theory, embed any file at all as a note, limited only by the
+editor (and available memory).
+
+A note chunk consists of:
+
+* Version (32-bit) - This section describes version 0
+* The note data (variable)
+
+Notes are versioned in case it turns out to be useful to impose some
+sort of structure on the notes. The size of the note data is inferred
+from the size of the chunk (i.e. the note data is the size of the chunk
+minus 4).
+
 # Meta Save Format
+
+Bocfel allows for interpreter-provided saves, independent from the
+Z-machine's `@save` opcode. There are ephemeral saves (using `/ps`) as
+well as disk-backed saves (`/save`) for games which do not support
+saving. However, these save files are no longer Quetzal files, because
+they operate slightly differently due to the game not handling the save
+code. Instead of the IFF type `IFZS` as in Quetzal, these files are
+`BFZS`.
 
 When a game wants to save, it calls the `@save` opcode, which it knows
 will be restored from using `@restore`. The program counter is stored by
@@ -102,7 +141,7 @@ interpreters do not try to load these files.
 Autosaves will also save at `@read_char`, which operates the same as
 saves at `@read`.
 
-In addition, four new chunks are defined to handle extra information
+In addition, two new chunks are defined to handle extra information
 needed during a meta save.
 
 ## The `Args` Chunk
@@ -169,13 +208,23 @@ Bocfel doesn't really support V6. If V6 support is ever added, the
 `Scrn` chunk will be updated to a new version with better V6 window
 support.
 
+# Autosaves
+
+Bocfel provides an autosave feature, which saves the game if the
+interpreter is shut down (without `@quit` having been called), to be
+restored upon the next start. Saves created through the autosave
+mechanism are identical to meta saves, but with added chunks.
+
+In order to continue the session in as similar a way as it was when it
+left off, three new chunks are defined to handle state which must
+persist for autosaves, but which must not persist for other saves.
+
 ## The `Rand` Chunk
 
 If the random number generator is in predicable mode (i.e. `@random` has
 been called with a negative value), the current state of the PRNG will
 be stored in the `Rand` chunk for autosaves. If the game is in random
-mode, then this chunk is omitted. For non-autosaves, this chunk is
-always omitted. Random state is stored as follows:
+mode, then this chunk is omitted. Random state is stored as follows:
 
 * PRNG type (16-bit) - The only supported PRNG type is Xorshift32,
                        which has a type of 0.
@@ -199,9 +248,36 @@ The chunk size is variable, and consists of:
 ### Undo data
 
 Undo states are stored sequentially, with the oldest first. Save states
-are BFZS data as described by this document.  Each save state consists
+are BFZS data as described by this document. Each save state consists
 of:
 
 * Save type (8-bit) - 0 for normal undo, 1 for meta
 * Size of the BFZS data (32-bit)
 * The BFZS data itself (variable)
+
+## The `MSav` Chunk
+
+In-memory saves (those created by `/ps`) are also included when
+autosaving. These are similar to `Undo` chunks.
+
+The chunk size is variable, and consists of:
+
+* Version (32-bit) - This section describes version 0
+* Number of in-memory saves (32-bit)
+* In-memory save data (described below)
+
+### In-memory save data
+
+In-memory saves are stored sequentially, with the oldest first.
+In-memory saves are BFZS data as described by this document. Each
+in-memory save consists of:
+
+* Size of the description (32-bit)
+* The description (variable)
+* Size of the BFZS data (32-bit)
+* The BFZS data itself (variable)
+
+In-memory saves are accompanied by a description given by the user. This
+description is saved as a UTF-8 string, the size of which (in bytes, not
+characters) is provided, followed by the string itself, without a null
+terminator.

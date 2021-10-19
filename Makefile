@@ -43,7 +43,9 @@ endif
 ifeq ($(PLATFORM), unix)
     MACROS+=	-DZTERP_UNIX
 ifndef GLK
+ifndef NO_CURSES
     LDADD+=	-lcurses
+endif
 endif
 endif
 
@@ -53,6 +55,10 @@ endif
 
 ifeq ($(PLATFORM), dos)
     MACROS+=	-DZTERP_DOS
+endif
+
+ifdef NO_CURSES
+    MACROS+=	-DZTERP_NO_CURSES
 endif
 
 ifdef NO_SAFETY_CHECKS
