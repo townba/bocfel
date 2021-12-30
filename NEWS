@@ -1,3 +1,9 @@
+1.4.1
+• Continue searching for Blorb files if the first one found is invalid.
+• Allow patches to be set via the configuration file.
+• A new “/config” meta command was added which allows users to edit the
+  configuration file with their preferred text editor.
+
 1.4
 • A new “/notes” meta command was added which allows users to add arbitrary
   notes to game sessions; these notes are included in save files automatically

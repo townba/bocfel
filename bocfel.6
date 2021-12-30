@@ -612,20 +612,43 @@ To enable this feature, set the
 .Dq persistent_transcript
 option, in the configuration file, to true (1).
 .It
-Editor for note taking:
+Text editor:
 .Nm
 allows the user to take notes in an external text editor and will
 include the notes in save files to allow notes to be associated with a
 particular gaming session across saves and restores.
+In addition, the configuration file can be edited via a text editor
+launched by
+.Nm .
 On Windows and macOS, the system text editor is used.
 On other Unix platforms, a default list of GUI text editors is tried.
 If you want to set a specific text editor, the
-.Dq notes_editor
+.Dq editor
 configuration entry can be set to whichever editor you would like.
 This is either an absolute path to an editor
 .Pq e.g.\& Pa /usr/bin/kate
-or the name of an an executable in the path
+or the name of an executable in the path
 .Pq e.g.\& Pa kate .
+.It
+Run-time game patching:
+.Nm
+has some built-in patches to fix bugs in games, but if new patches are
+needed, they can also be added via the configuration file, meaning you
+do not have to wait for a new
+.Nm
+release in order to provide a patch.
+The syntax is as follows:
+.Bd -literal -offset indent
+patch = 0xd3d4 3 [0x31, 0x0c, 0x73] [0x51, 0x73, 0x0c]
+.Ed
+.Pp
+This indicates that 3 bytes at address 0xd3d4 are being replaced.
+The first bracketed set of bytes indicates the expected existing bytes,
+and the second bracketed set of bytes indicates the replacement bytes.
+The replacement set must be the same size as the existing set.
+Such patches should be included only in a specific game's group;
+otherwise they will be applied to all games, which is generally a bad
+idea.
 .It
 Fine\-grained control over colors in Gargoyle; this does not apply to
 any other build types.
@@ -843,6 +866,10 @@ As with
 .Sy /disable ,
 this is meant for games which expect input to start with a slash
 character.
+.It Sy /config
+Open
+.Nm Ap s
+configuration file in a text editor.
 .It Sy /debug [...]
 Perform a debugging operation; see
 .Sx META DEBUG COMMANDS .

@@ -3,7 +3,7 @@ COMPILER_FLAGS=	-Wall -Wshadow -Wmissing-prototypes -std=c11 -pedantic
 endif
 
 ifeq ($(CC), clang)
-COMPILER_FLAGS=	-Wall -Wunused-macros -Wmissing-prototypes -Wno-tautological-constant-out-of-range-compare -std=c11 -pedantic
+COMPILER_FLAGS=	-Wall -Wunused-macros -Wmissing-prototypes -std=c11 -pedantic
 endif
 
 ifeq ($(CC), icc)
