@@ -1,3 +1,7 @@
+1.4.2
+• Support auxiliary files (see §7.6 of the Z-Machine Standards Document 1.1).
+• Add a patch to properly support delays in Bureaucracy.
+
 1.4.1
 • Continue searching for Blorb files if the first one found is invalid.
 • Allow patches to be set via the configuration file.

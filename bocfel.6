@@ -1095,6 +1095,21 @@ will silently do nothing.
 The
 .Fl v
 option can be used to determine whether this is the case.
+.Sh AUXILIARY FILES
+The Z\-machine provides the ability for games to load and save files on
+the host system (see section 7.6 of version 1.1 of the Z\-machine
+Standards Document).
+.Nm
+confines these files to game-specific directories so that games are
+unable to overwrite arbitrary files on the host system.
+The game-specific directories are places in platform-specific locations.
+On Unix, this directory is
+.Pa $XDG_DATA_HOME/bocfel/auxiliary .
+On Windows, it is
+.Pa %APPDATA%/Bocfel .
+The individual game directories are the game IDs as reported by the
+.Fl i
+option.
 .Sh STANDARDS
 .Nm
 is believed to comply fully with version 1.1 of
