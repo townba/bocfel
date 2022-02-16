@@ -1,7 +1,7 @@
-SRCS=	blorb.c branch.c dict.c iff.c io.c math.c meta.c memory.c objects.c osdep.c patches.c process.c random.c screen.c sound.c stack.c stash.c unicode.c util.c zoom.c zterp.c
-OBJS=	$(SRCS:%.c=%.o)
+SRCS=	blorb.cpp branch.cpp dict.cpp iff.cpp io.cpp mathop.cpp meta.cpp memory.cpp objects.cpp osdep.cpp patches.cpp process.cpp random.cpp screen.cpp sound.cpp stack.cpp stash.cpp unicode.cpp util.cpp zoom.cpp zterp.cpp
+OBJS=	$(SRCS:%.cpp=%.o)
 
-CFLAGS=	-g
+CXXFLAGS=	-g
 
 include config.mk
 include compiler.mk
@@ -15,8 +15,8 @@ ifdef FAST
 endif
 
 ifdef GLK
-    SRCS+=	glkstart.c
-    CFLAGS+=	-I$(GLK)
+    SRCS+=	glkstart.cpp
+    CXXFLAGS+=	-I$(GLK)
     MACROS+=	-DZTERP_GLK
 
     include $(GLK)/Make.$(GLK)
@@ -38,6 +38,22 @@ ifdef GLK
     ifndef GLK_NO_BLORB
         MACROS+=	-DZTERP_GLK_BLORB
     endif
+
+    ifeq ($(GLKSTARTUP),)
+    ifeq ($(GLK), winglk)
+        GLKSTARTUP=	windows
+    else
+        GLKSTARTUP=	unix
+    endif
+    endif
+
+    ifeq ($(GLKSTARTUP), unix)
+        MACROS+=	-DZTERP_GLK_UNIX
+    else ifeq ($(GLKSTARTUP), windows)
+        MACROS+=	-DZTERP_GLK_WINGLK
+    else
+        $(error Unknown Glk startup: $(GLKSTARTUP))
+    endif
 endif
 
 ifeq ($(PLATFORM), unix)
@@ -46,6 +62,11 @@ ifndef GLK
 ifndef NO_CURSES
     LDADD+=	-lcurses
 endif
+endif
+ifdef ICU
+    MACROS+=	-DZTERP_ICU
+    CFLAGS+=	$(shell pkg-config icu-uc --cflags)
+    LDADD+=	$(shell pkg-config icu-uc --libs)
 endif
 endif
 
@@ -79,16 +100,16 @@ endif
 
 all: bocfel
 
-%.o: %.c
+%.o: %.cpp
 ifdef V
-	$(CC) $(OPT) $(CFLAGS) $(COMPILER_FLAGS) $(MACROS) -c $<
+	$(REALCXX) $(OPT) $(CXXFLAGS) $(COMPILER_FLAGS) $(MACROS) -c $<
 else
-	@echo $(CC) $(OPT) $(CFLAGS) $(MACROS) -c $<
-	@$(CC) $(OPT) $(CFLAGS) $(COMPILER_FLAGS) $(MACROS) -c $<
+	@echo $(REALCXX) $(OPT) $(CXXFLAGS) $(MACROS) -c $<
+	@$(REALCXX) $(OPT) $(CXXFLAGS) $(COMPILER_FLAGS) $(MACROS) -c $<
 endif
 
 bocfel: $(OBJS)
-	$(CC) $(OPT) -o $@ $^ $(LDADD)
+	$(REALCXX) $(OPT) -o $@ $^ $(LDADD)
 
 clean:
 	rm -f bocfel *.o
@@ -101,9 +122,6 @@ install: bocfel
 .PHONY: depend
 depend:
 	makedepend -f- -Y $(MACROS) $(SRCS) > deps 2> /dev/null
-
-tags: $(SRCS)
-	ctags -I ZASSERT --c-kinds=+l $^ *.h
 
 bocfel.html: bocfel.6
 	mandoc -Thtml -Ostyle=mandoc.css,toc -Ios= $< > $@

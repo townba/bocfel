@@ -1,31 +1,21 @@
-ifeq ($(CC), gcc)
-COMPILER_FLAGS=	-Wall -Wshadow -Wmissing-prototypes -std=c11 -pedantic
+ifeq ($(CXX), g++)
+COMPILER_FLAGS=	-Wall -Wshadow -Wswitch -Wno-sign-compare -std=c++14 -pedantic
 endif
 
-ifeq ($(CC), clang)
-COMPILER_FLAGS=	-Wall -Wunused-macros -Wmissing-prototypes -std=c11 -pedantic
+ifeq ($(CXX), clang++)
+COMPILER_FLAGS=	-Wall -Wunused-macros -std=c++14 -pedantic
 endif
 
-ifeq ($(CC), icc)
-COMPILER_FLAGS=	-Wall -std=c11
+ifeq ($(CXX), icpc)
+COMPILER_FLAGS=	-Wall -std=c++14
 endif
 
-ifeq ($(CC), suncc)
-COMPILER_FLAGS=	-std=c11 -pedantic
+ifeq ($(CXX), sunCC)
+COMPILER_FLAGS=	-std=c++14 -pedantic
 endif
 
-ifeq ($(CC), tcc)
-COMPILER_FLAGS=	-std=c11
-endif
-
-ifeq ($(CC), cparser)
-COMPILER_FLAGS=	-Wno-experimental -Wno-unused-parameter -std=c11
-endif
-
-ifeq ($(shell basename $(CC)), ccc-analyzer)
-COMPILER_FLAGS=	-std=c11
-endif
-
-ifneq ($(CCHOST),)
-CC:=	$(CCHOST)-$(CC)
+ifeq ($(CXXHOST),)
+REALCXX:=	$(CXX)
+else
+REALCXX:=	$(CXXHOST)-$(CXX)
 endif

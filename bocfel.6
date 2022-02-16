@@ -213,7 +213,7 @@ Z\-machine interpreters are able to inform games what platform they are
 running on by setting an interpreter number in the range 1 to 11.
 The following are the valid values (taken from Graham Nelson's
 .Em Z\-Machine Standards Document
-1.0):
+1.1):
 .Pp
 .Bl -enum -offset indent -compact
 .It
@@ -253,7 +253,7 @@ makes what is probably the most visible use of the interpreter number,
 using it to decide how to deal with character graphics.
 See section 16 of the
 .Em Z\-Machine Standards Document
-1.0 for more information.
+1.1 for more information.
 By default, the interpreter version is set to 1 becuase this causes
 .Em Beyond Zork
 to prompt the user about the machine he is using, allowing him to select
@@ -731,7 +731,7 @@ Anything the game prints out in a normal font will look fine.
 .Pp
 See section 16 of the
 .Em Z\-Machine Standards Document
-1.0 for more information.
+1.1 for more information.
 .Sh META COMMANDS
 .Nm
 includes support for
@@ -1106,7 +1106,7 @@ The game-specific directories are places in platform-specific locations.
 On Unix, this directory is
 .Pa $XDG_DATA_HOME/bocfel/auxiliary .
 On Windows, it is
-.Pa %APPDATA%/Bocfel .
+.Pa %APPDATA%/Bocfel/auxiliary .
 The individual game directories are the game IDs as reported by the
 .Fl i
 option.
@@ -1115,7 +1115,7 @@ option.
 is believed to comply fully with version 1.1 of
 .Em The Z\-machine Standards Document ;
 see
-.Lk http://www.inform-fiction.org/zmachine/standards/z1point0/index.html
+.Lk https://www.inform-fiction.org/zmachine/standards/z1point1/index.html
 and
 .Lk http://ifarchive.org/if-archive/infocom/interpreters/specification/ZSpec11.txt .
 .Sh AUTHORS

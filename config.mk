@@ -1,7 +1,7 @@
 # Select the compiler to be used. See compiler.mk for supported compilers.
 # Even if your compiler is not officially supported, it might still work; C11
 # support is required, however.
-CC=		gcc
+CXX=		g++
 
 # Select the optimization level. Because of how the program is structured, it
 # benefits very much from automatically inlined functions, and even more so if
@@ -31,10 +31,18 @@ MANDIR=		$(PREFIX)/man/man6
 # If defined, this variable controls which Glk implementation will be used. The
 # Glk library must exist in a directory of the same name (so if Glk is set to
 # glktermw, the Glk implementation will be found in glktermw/).
-# If this value is empty or not defined, I/O will be done solely in terms of C’s
-# standard library.
+# If this value is empty or not defined, I/O will be done solely in terms of
+# C++’s standard library.
 #
 GLK=		gargoyle
+
+# Glk is almost platform neutral, but does require a small amount of
+# platform-specific startup code. Most implementations provide a so-called Unix
+# startup (even on non-Unix platforms), but Windows Glk provides its own. Bocfel
+# will assume a Unix startup unless $GLK is set to winglk, in which case it
+# assumes a Windows startup. This can be overridden here if necessary. For Unix,
+# this must be “unix”. For Windows, it must be “windows”.
+GLKSTARTUP=
 
 # The Glk specification recommends calling glk_tick() every instruction, because
 # there may be some platforms that need to do some processing every now and
@@ -99,3 +107,12 @@ GLK=		gargoyle
 # any value), the setting of this bit will be allowed.
 #
 # TANDY=		1
+
+# The Z-machine requires user input to be converted to lowercase. By default
+# Bocfel uses a Unicode translation function adapted from Kevin Bracey’s
+# Zip2000. This covers Latin, Greek, and Cyrillic. Bocfel can also use the ICU
+# project’s Unicode library, which provides a wider range of Unicode support.
+# This is probably not useful, but if a game is ever written in Armenian (for
+# example), it might come in handy. The ICU libraries and headers must be
+# present.
+# ICU=			1

@@ -1,3 +1,8 @@
+2.0
+• Bocfel has been ported from C to C++. This should be transparent for users,
+  but is the reason for the major version bump.
+• ICU can be used to perform Unicode lowercasing.
+
 1.4.2
 • Support auxiliary files (see §7.6 of the Z-Machine Standards Document 1.1).
 • Add a patch to properly support delays in Bureaucracy.
