@@ -65,7 +65,7 @@ endif
 endif
 ifdef ICU
     MACROS+=	-DZTERP_ICU
-    CFLAGS+=	$(shell pkg-config icu-uc --cflags)
+    CXXFLAGS+=	$(shell pkg-config icu-uc --cflags)
     LDADD+=	$(shell pkg-config icu-uc --libs)
 endif
 endif

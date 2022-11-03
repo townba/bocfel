@@ -1,3 +1,9 @@
+2.0.1
+• Don’t patch Bureaucracy if timed input isn’t available.
+• Properly set CXXFLAGS if ICU support is requested.
+• Avoid a potential buffer overflow in memory I/O.
+• Work around a bug in Inform’s “box” statement.
+
 2.0
 • Bocfel has been ported from C to C++. This should be transparent for users,
   but is the reason for the major version bump.
