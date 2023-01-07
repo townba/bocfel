@@ -94,10 +94,6 @@ ifdef NO_WATCHPOINTS
     MACROS+=	-DZTERP_NO_WATCHPOINTS
 endif
 
-ifdef TANDY
-    MACROS+=	-DZTERP_TANDY
-endif
-
 all: bocfel
 
 %.o: %.cpp

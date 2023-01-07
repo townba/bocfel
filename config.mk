@@ -1,5 +1,5 @@
 # Select the compiler to be used. See compiler.mk for supported compilers.
-# Even if your compiler is not officially supported, it might still work; C11
+# Even if your compiler is not officially supported, it might still work; C++14
 # support is required, however.
 CXX=		g++
 
@@ -7,10 +7,8 @@ CXX=		g++
 # benefits very much from automatically inlined functions, and even more so if
 # the compiler is able to do link-time optimization. On the other hand, most
 # interactive fiction does not need a fast interpreter. For good results from
-# gcc, the following is recommended:
-# -O3 -flto -fomit-frame-pointer
-# -flto works only on gcc 4.5 and newer, and selects link-time optimization.
-#
+# g++ and clang++, the following is recommended:
+# -O3 -flto
 OPT=		-O2
 
 # Select the target platform. Valid values are:
@@ -18,7 +16,7 @@ OPT=		-O2
 # • win32 (for Win32 systems)
 # • dos (for DOS systems)
 #
-# Any other value (or none at all) will result in the use of standard C11
+# Any other value (or none at all) will result in the use of standard C++14
 # functions only.
 #
 PLATFORM=	unix
@@ -93,20 +91,6 @@ GLKSTARTUP=
 # slows down memory access, so can be disabled. If the following variable is
 # defined (with any value), watchpoints will be disabled.
 # NO_WATCHPOINTS=	1
-
-# Tandy censored Infocom games. This was accomplished by Tandy interpreters
-# setting a special flag to indicate to the game that it should cow to pressure
-# from groups who were, apparently, unable to simply not look at things they
-# found offensive. While Appendix B of the Z-machine standard indicates that
-# games are not allowed to change this flag themselves, at least The Witness has
-# code to do this. Normally, this causes the interpreter to halt because
-# read-only memory is being written. In the interest of authenticity, I would
-# like Infocom games to be able to run properly under any conditions. However,
-# allowing this slows down each memory write. Thus by default games are not
-# allowed to set the “Tandy bit”, but if the following variable is defined (with
-# any value), the setting of this bit will be allowed.
-#
-# TANDY=		1
 
 # The Z-machine requires user input to be converted to lowercase. By default
 # Bocfel uses a Unicode translation function adapted from Kevin Bracey’s

@@ -4,7 +4,7 @@
 .Sh NAME
 .Nm bocfel
 .Nd Z\-machine interpreter
-.Aq Lk http://bocfel.org/
+.Aq Lk https://bocfel.org/
 .Sh SYNOPSIS
 .Nm
 .Op Fl cCdDefFgGhHkmprstxXyY
@@ -371,9 +371,7 @@ See the
 section for more information.
 .Pp
 The default value is 100.
-A value of zero disables undo, and a negative value provides unlimited
-undo.
-This is probably a bad idea.
+A value of zero disables undo.
 .It Fl v
 Display version information and show which compile\-time options are
 set.
@@ -388,16 +386,12 @@ If a game requires one of these letters for its own use, these
 abbreviations can be turned off with
 .Fl x .
 .It Fl X
-The Tandy corporation licensed some Infocom games, but apparently
+Enable the Tandy, or censorship flag.
+This flag is generally unused, but it does change some language in
 .Em The Witness
-was too scary for them, so some words were changed so as not to offend
-their ridiculously delicate sensibilities.
-If you want to laugh at Tandy's insecurities, this flag will turn on
-their censorship.
-In addition to the mangling of
-.Em The Witness ,
-a few other games unnecessarily add mention of Tandy in the output of
-the VERSION command.
+which was, apparently, offensive to the Tandy Corporation.
+Some other games add a note regarding licensing to Tandy, but apart from
+this, it is apparently unused by Infocom.
 .It Fl y
 When transcripting is turned on and an existing file is selected, that
 file is appended to rather than overwritten.
@@ -513,7 +507,7 @@ username (s)
 .It
 disable_meta_commands (b)
 .It
-max_saves (n)
+undo_slots (n)
 .It
 int_number (n)
 .It
@@ -629,6 +623,12 @@ This is either an absolute path to an editor
 .Pq e.g.\& Pa /usr/bin/kate
 or the name of an executable in the path
 .Pq e.g.\& Pa kate .
+The editor must not run in the background, or else
+.Nm
+won't be able to determine when it has exited.
+Some editors fork into the background by default, but can be told to
+stay in the foreground instead with a flag such as
+.Ar --nofork .
 .It
 Run-time game patching:
 .Nm
@@ -1041,7 +1041,8 @@ the story file is
 then the Blorb file must be
 .Pa /foo/bar/sherlock.blb .
 .Pp
-Bleeps (sound effects 1 and 2) are not supported.
+Bleeps (sound effects 1 and 2) are supported under sufficiently modern
+Gargoyle releases.
 .Sh CHEATING
 There is extremely rudimentary support for
 .Dq cheating .

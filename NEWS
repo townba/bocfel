@@ -1,3 +1,8 @@
+2.1
+• Honor the loop chunk in Blorb sounds.
+• Support bleeps under Gargoyle.
+• Use separate channels for music and sound effects.
+
 2.0.1
 • Don’t patch Bureaucracy if timed input isn’t available.
 • Properly set CXXFLAGS if ICU support is requested.

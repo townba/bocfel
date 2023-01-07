@@ -1,40 +1,35 @@
 # DO NOT DELETE
 
 blorb.o: blorb.h iff.h io.h types.h
-branch.o: branch.h memory.h meta.h iff.h io.h types.h util.h zterp.h stack.h
-branch.o: process.h
-dict.o: dict.h types.h memory.h meta.h iff.h io.h util.h zterp.h stack.h
-dict.o: process.h unicode.h
+branch.o: branch.h memory.h types.h process.h stack.h util.h
+dict.o: dict.h types.h memory.h process.h stack.h unicode.h util.h zterp.h
 iff.o: iff.h io.h types.h
 io.o: io.h types.h osdep.h screen.h iff.h util.h unicode.h
 mathop.o: mathop.h branch.h process.h stack.h types.h util.h zterp.h
-meta.o: meta.h iff.h io.h types.h memory.h util.h zterp.h stack.h objects.h
-meta.o: osdep.h screen.h process.h stash.h unicode.h
-memory.o: memory.h meta.h iff.h io.h types.h util.h zterp.h stack.h branch.h
-memory.o: process.h screen.h
-objects.o: objects.h types.h branch.h memory.h meta.h iff.h io.h util.h
-objects.o: zterp.h stack.h process.h screen.h
+meta.o: meta.h iff.h io.h types.h memory.h objects.h osdep.h screen.h util.h
+meta.o: process.h stack.h stash.h zterp.h
+memory.o: memory.h types.h branch.h meta.h iff.h io.h process.h stack.h
+memory.o: screen.h util.h zterp.h
+objects.o: objects.h types.h branch.h memory.h process.h stack.h screen.h
+objects.o: iff.h io.h util.h zterp.h
 osdep.o: io.h types.h osdep.h screen.h iff.h util.h zterp.h stack.h
-patches.o: patches.h memory.h meta.h iff.h io.h types.h util.h zterp.h
-patches.o: stack.h
-process.o: process.h stack.h types.h branch.h dict.h mathop.h memory.h meta.h
-process.o: iff.h io.h util.h zterp.h objects.h random.h screen.h sound.h
-process.o: zoom.h
+patches.o: patches.h memory.h types.h util.h zterp.h stack.h
+process.o: process.h stack.h types.h branch.h dict.h mathop.h memory.h
+process.o: objects.h random.h iff.h io.h screen.h util.h sound.h zoom.h
+process.o: zterp.h
 random.o: random.h iff.h io.h types.h process.h stack.h stash.h util.h
 random.o: zterp.h
-screen.o: screen.h iff.h io.h types.h util.h branch.h dict.h meta.h memory.h
-screen.o: zterp.h stack.h objects.h osdep.h process.h sound.h stash.h
-screen.o: unicode.h
-sound.o: sound.h types.h process.h stack.h zterp.h
-stack.o: stack.h types.h branch.h iff.h io.h memory.h meta.h util.h zterp.h
-stack.o: osdep.h screen.h process.h random.h stash.h
-stash.o: stash.h types.h util.h
-unicode.o: unicode.h types.h memory.h meta.h iff.h io.h util.h zterp.h
-unicode.o: stack.h
-util.o: util.h types.h process.h stack.h screen.h iff.h io.h unicode.h
-util.o: zterp.h help.h
+screen.o: screen.h iff.h io.h types.h util.h branch.h dict.h memory.h meta.h
+screen.o: objects.h osdep.h process.h stack.h sound.h stash.h unicode.h
+screen.o: zterp.h
+sound.o: sound.h types.h blorb.h iff.h io.h process.h stack.h zterp.h
+stack.o: stack.h types.h branch.h iff.h io.h memory.h meta.h osdep.h screen.h
+stack.o: util.h process.h random.h stash.h zterp.h
+stash.o: stash.h types.h
+unicode.o: unicode.h types.h memory.h util.h zterp.h stack.h
+util.o: util.h types.h process.h stack.h screen.h iff.h io.h zterp.h help.h
 zoom.o: zoom.h screen.h iff.h io.h types.h util.h zterp.h stack.h
 zterp.o: zterp.h stack.h types.h blorb.h iff.h io.h branch.h memory.h meta.h
-zterp.o: util.h osdep.h screen.h patches.h process.h random.h sound.h
+zterp.o: osdep.h screen.h util.h patches.h process.h random.h sound.h
 zterp.o: unicode.h v1234.h
 glkstart.o: types.h util.h zterp.h stack.h help.h

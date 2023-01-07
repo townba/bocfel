@@ -40,6 +40,11 @@ I make use of fixed-width types such as uint8_t and uint16_t. As a practical
 side-effect, Bocfel requires a system with 8-, 16-, and 32-bit 2's complement
 integers. This is likely not a problem.
 
+Due to the structure of the program, building with link-time optimization
+enabled is highly recommended. With both g++ and clang++, link-time optimization
+results in a binary that runs around 40% faster than one built without it. See
+config.mk and the OPT variable for information on link-time optimization.
+
 -------------------------------------------------------------------------------
 
 There are two main types of build: Glk and non-Glk. Glk builds use libraries
